@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.routes import (
+    agendas,
     availability_hours,
     business_service_hours,
     calendar,
@@ -30,6 +31,7 @@ app.include_router(roles.router)
 app.include_router(availability_hours.router)
 app.include_router(calendar.router)
 app.include_router(business_service_hours.router)
+app.include_router(agendas.router)
 
 
 @app.get("/")

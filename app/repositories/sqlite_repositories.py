@@ -1,9 +1,18 @@
 import sqlite3
-from datetime import date, time
+from datetime import date, datetime, time
 from uuid import UUID, uuid4
 
-from app.domain.models import AvailabilityHours, BusinessServiceHours, Person, Role
+from app.domain.models import (
+    Agenda,
+    AgendaCoverage,
+    AgendaEntry,
+    AvailabilityHours,
+    BusinessServiceHours,
+    Person,
+    Role,
+)
 from app.repositories.interfaces import (
+    AgendaRepository,
     AvailabilityHoursRepository,
     BusinessServiceHoursRepository,
     PersonRepository,
@@ -282,4 +291,158 @@ class SQLiteBusinessServiceHoursRepository(BusinessServiceHoursRepository):
             is_recurring=bool(row["is_recurring"]),
             specific_date=date.fromisoformat(row["specific_date"]) if row["specific_date"] else None,
         )
+
+
+class SQLiteAgendaRepository(AgendaRepository):
+    def __init__(self, connection: sqlite3.Connection):
+        self.conn = connection
+
+    def create(self, agenda: Agenda) -> Agenda:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "INSERT INTO agendas (id, role_id, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            (
+                str(agenda.id),
+                str(agenda.role_id),
+                agenda.status,
+                agenda.created_at.isoformat(),
+                agenda.updated_at.isoformat(),
+            ),
+        )
+        self.conn.commit()
+        return agenda
+
+    def get_by_id(self, agenda_id: UUID) -> Agenda | None:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM agendas WHERE id = ?", (str(agenda_id),))
+        row = cursor.fetchone()
+        if row:
+            return Agenda(
+                id=UUID(row["id"]),
+                role_id=UUID(row["role_id"]),
+                status=row["status"],
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
+            )
+        return None
+
+    def get_by_role(self, role_id: UUID) -> list[Agenda]:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM agendas WHERE role_id = ?", (str(role_id),))
+        rows = cursor.fetchall()
+        return [
+            Agenda(
+                id=UUID(row["id"]),
+                role_id=UUID(row["role_id"]),
+                status=row["status"],
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
+            )
+            for row in rows
+        ]
+
+    def get_by_role_and_status(self, role_id: UUID, status: str) -> list[Agenda]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT * FROM agendas WHERE role_id = ? AND status = ?",
+            (str(role_id), status),
+        )
+        rows = cursor.fetchall()
+        return [
+            Agenda(
+                id=UUID(row["id"]),
+                role_id=UUID(row["role_id"]),
+                status=row["status"],
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
+            )
+            for row in rows
+        ]
+
+    def create_entry(self, entry: AgendaEntry) -> AgendaEntry:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """INSERT INTO agenda_entries 
+               (id, agenda_id, person_id, date, start_time, end_time, role_id) 
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                str(entry.id),
+                str(entry.agenda_id),
+                str(entry.person_id),
+                entry.date.isoformat(),
+                entry.start_time.isoformat(),
+                entry.end_time.isoformat(),
+                str(entry.role_id),
+            ),
+        )
+        self.conn.commit()
+        return entry
+
+    def get_entries_by_agenda(self, agenda_id: UUID) -> list[AgendaEntry]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT * FROM agenda_entries WHERE agenda_id = ?", (str(agenda_id),)
+        )
+        rows = cursor.fetchall()
+        return [
+            AgendaEntry(
+                id=UUID(row["id"]),
+                agenda_id=UUID(row["agenda_id"]),
+                person_id=UUID(row["person_id"]),
+                date=date.fromisoformat(row["date"]),
+                start_time=time.fromisoformat(row["start_time"]),
+                end_time=time.fromisoformat(row["end_time"]),
+                role_id=UUID(row["role_id"]),
+            )
+            for row in rows
+        ]
+
+    def create_coverage(self, coverage: AgendaCoverage) -> AgendaCoverage:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """INSERT INTO agenda_coverage 
+               (id, agenda_id, date, start_time, end_time, role_id, is_covered, required_person_count) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                str(coverage.id),
+                str(coverage.agenda_id),
+                coverage.date.isoformat(),
+                coverage.start_time.isoformat(),
+                coverage.end_time.isoformat(),
+                str(coverage.role_id),
+                1 if coverage.is_covered else 0,
+                coverage.required_person_count,
+            ),
+        )
+        self.conn.commit()
+        return coverage
+
+    def get_coverage_by_agenda(self, agenda_id: UUID) -> list[AgendaCoverage]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT * FROM agenda_coverage WHERE agenda_id = ?", (str(agenda_id),)
+        )
+        rows = cursor.fetchall()
+        return [
+            AgendaCoverage(
+                id=UUID(row["id"]),
+                agenda_id=UUID(row["agenda_id"]),
+                date=date.fromisoformat(row["date"]),
+                start_time=time.fromisoformat(row["start_time"]),
+                end_time=time.fromisoformat(row["end_time"]),
+                role_id=UUID(row["role_id"]),
+                is_covered=bool(row["is_covered"]),
+                required_person_count=row["required_person_count"],
+            )
+            for row in rows
+        ]
+
+    def update_status(self, agenda_id: UUID, status: str) -> bool:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "UPDATE agendas SET status = ?, updated_at = ? WHERE id = ?",
+            (status, datetime.now().isoformat(), str(agenda_id)),
+        )
+        self.conn.commit()
+        return cursor.rowcount > 0
 

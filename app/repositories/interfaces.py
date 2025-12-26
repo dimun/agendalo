@@ -2,7 +2,15 @@ from abc import ABC, abstractmethod
 from datetime import date
 from uuid import UUID
 
-from app.domain.models import AvailabilityHours, BusinessServiceHours, Person, Role
+from app.domain.models import (
+    Agenda,
+    AgendaCoverage,
+    AgendaEntry,
+    AvailabilityHours,
+    BusinessServiceHours,
+    Person,
+    Role,
+)
 
 
 class PersonRepository(ABC):
@@ -86,5 +94,43 @@ class BusinessServiceHoursRepository(ABC):
 
     @abstractmethod
     def delete(self, business_service_hours_id: UUID) -> bool:
+        pass
+
+
+class AgendaRepository(ABC):
+    @abstractmethod
+    def create(self, agenda: Agenda) -> Agenda:
+        pass
+
+    @abstractmethod
+    def get_by_id(self, agenda_id: UUID) -> Agenda | None:
+        pass
+
+    @abstractmethod
+    def get_by_role(self, role_id: UUID) -> list[Agenda]:
+        pass
+
+    @abstractmethod
+    def get_by_role_and_status(self, role_id: UUID, status: str) -> list[Agenda]:
+        pass
+
+    @abstractmethod
+    def create_entry(self, entry: AgendaEntry) -> AgendaEntry:
+        pass
+
+    @abstractmethod
+    def get_entries_by_agenda(self, agenda_id: UUID) -> list[AgendaEntry]:
+        pass
+
+    @abstractmethod
+    def create_coverage(self, coverage: AgendaCoverage) -> AgendaCoverage:
+        pass
+
+    @abstractmethod
+    def get_coverage_by_agenda(self, agenda_id: UUID) -> list[AgendaCoverage]:
+        pass
+
+    @abstractmethod
+    def update_status(self, agenda_id: UUID, status: str) -> bool:
         pass
 

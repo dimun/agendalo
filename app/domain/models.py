@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, time
+from datetime import date, datetime, time
 from uuid import UUID
 
 
@@ -42,4 +42,36 @@ class BusinessServiceHours:
     end_date: date | None = None
     is_recurring: bool = True
     specific_date: date | None = None
+
+
+@dataclass
+class Agenda:
+    id: UUID
+    role_id: UUID
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class AgendaEntry:
+    id: UUID
+    agenda_id: UUID
+    person_id: UUID
+    date: date
+    start_time: time
+    end_time: time
+    role_id: UUID
+
+
+@dataclass
+class AgendaCoverage:
+    id: UUID
+    agenda_id: UUID
+    date: date
+    start_time: time
+    end_time: time
+    role_id: UUID
+    is_covered: bool
+    required_person_count: int = 1
 

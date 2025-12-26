@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
@@ -101,4 +101,48 @@ class BusinessServiceHoursResponse(BaseModel):
     end_date: date | None = None
     is_recurring: bool
     specific_date: date | None = None
+
+
+class AgendaGenerateRequest(BaseModel):
+    role_id: UUID
+    weeks: list[int]
+    year: int
+    optimization_strategy: str
+
+
+class AgendaEntryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    agenda_id: UUID
+    person_id: UUID
+    date: date
+    start_time: time
+    end_time: time
+    role_id: UUID
+
+
+class AgendaCoverageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    agenda_id: UUID
+    date: date
+    start_time: time
+    end_time: time
+    role_id: UUID
+    is_covered: bool
+    required_person_count: int
+
+
+class AgendaResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    role_id: UUID
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    entries: list[AgendaEntryResponse] = []
+    coverage: list[AgendaCoverageResponse] = []
 

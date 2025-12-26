@@ -67,6 +67,47 @@ def _get_test_db_connection() -> Generator[sqlite3.Connection, None, None]:
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agendas (
+                id TEXT PRIMARY KEY,
+                role_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(role_id) REFERENCES roles(id)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agenda_entries (
+                id TEXT PRIMARY KEY,
+                agenda_id TEXT NOT NULL,
+                person_id TEXT NOT NULL,
+                date TEXT NOT NULL,
+                start_time TEXT NOT NULL,
+                end_time TEXT NOT NULL,
+                role_id TEXT NOT NULL,
+                FOREIGN KEY(agenda_id) REFERENCES agendas(id),
+                FOREIGN KEY(person_id) REFERENCES people(id),
+                FOREIGN KEY(role_id) REFERENCES roles(id)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agenda_coverage (
+                id TEXT PRIMARY KEY,
+                agenda_id TEXT NOT NULL,
+                date TEXT NOT NULL,
+                start_time TEXT NOT NULL,
+                end_time TEXT NOT NULL,
+                role_id TEXT NOT NULL,
+                is_covered INTEGER NOT NULL,
+                required_person_count INTEGER NOT NULL DEFAULT 1,
+                FOREIGN KEY(agenda_id) REFERENCES agendas(id),
+                FOREIGN KEY(role_id) REFERENCES roles(id)
+            )
+        """)
+
         _shared_test_conn.commit()
     yield _shared_test_conn
 
@@ -76,6 +117,9 @@ def reset_test_db():
     global _shared_test_conn
     if _shared_test_conn:
         cursor = _shared_test_conn.cursor()
+        cursor.execute("DELETE FROM agenda_entries")
+        cursor.execute("DELETE FROM agenda_coverage")
+        cursor.execute("DELETE FROM agendas")
         cursor.execute("DELETE FROM availability_hours")
         cursor.execute("DELETE FROM business_service_hours")
         cursor.execute("DELETE FROM people")

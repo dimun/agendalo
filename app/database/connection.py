@@ -65,6 +65,47 @@ def init_database() -> None:
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agendas (
+            id TEXT PRIMARY KEY,
+            role_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(role_id) REFERENCES roles(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agenda_entries (
+            id TEXT PRIMARY KEY,
+            agenda_id TEXT NOT NULL,
+            person_id TEXT NOT NULL,
+            date TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            role_id TEXT NOT NULL,
+            FOREIGN KEY(agenda_id) REFERENCES agendas(id),
+            FOREIGN KEY(person_id) REFERENCES people(id),
+            FOREIGN KEY(role_id) REFERENCES roles(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agenda_coverage (
+            id TEXT PRIMARY KEY,
+            agenda_id TEXT NOT NULL,
+            date TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            role_id TEXT NOT NULL,
+            is_covered INTEGER NOT NULL,
+            required_person_count INTEGER NOT NULL DEFAULT 1,
+            FOREIGN KEY(agenda_id) REFERENCES agendas(id),
+            FOREIGN KEY(role_id) REFERENCES roles(id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 

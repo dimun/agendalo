@@ -5,17 +5,22 @@ from fastapi import Depends
 
 from app.database.connection import get_db_connection
 from app.repositories.interfaces import (
+    AgendaRepository,
     AvailabilityHoursRepository,
     BusinessServiceHoursRepository,
     PersonRepository,
     RoleRepository,
 )
 from app.repositories.sqlite_repositories import (
+    SQLiteAgendaRepository,
     SQLiteAvailabilityHoursRepository,
     SQLiteBusinessServiceHoursRepository,
     SQLitePersonRepository,
     SQLiteRoleRepository,
 )
+from app.schedulers.interfaces import Scheduler
+from app.schedulers.or_tools_scheduler import ORToolsScheduler
+from app.services.agenda_service import AgendaService
 from app.services.availability_hours_service import AvailabilityHoursService
 from app.services.business_service_hours_service import BusinessServiceHoursService
 from app.services.calendar_service import CalendarService
@@ -74,6 +79,34 @@ def get_business_service_hours_service(
     role_repo: RoleRepository = Depends(get_role_repository),
 ) -> BusinessServiceHoursService:
     return BusinessServiceHoursService(business_service_hours_repo, role_repo)
+
+
+def get_agenda_repository(
+    conn: sqlite3.Connection = Depends(get_db_connection),
+) -> Generator[AgendaRepository, None, None]:
+    yield SQLiteAgendaRepository(conn)
+
+
+def get_scheduler() -> Scheduler:
+    return ORToolsScheduler()
+
+
+def get_agenda_service(
+    agenda_repo: AgendaRepository = Depends(get_agenda_repository),
+    availability_hours_repo: AvailabilityHoursRepository = Depends(get_availability_hours_repository),
+    business_service_hours_repo: BusinessServiceHoursRepository = Depends(
+        get_business_service_hours_repository
+    ),
+    role_repo: RoleRepository = Depends(get_role_repository),
+    scheduler: Scheduler = Depends(get_scheduler),
+) -> AgendaService:
+    return AgendaService(
+        agenda_repo,
+        availability_hours_repo,
+        business_service_hours_repo,
+        role_repo,
+        scheduler,
+    )
 
 
 def get_calendar_service(
