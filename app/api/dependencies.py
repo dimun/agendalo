@@ -5,22 +5,22 @@ from fastapi import Depends
 
 from app.database.connection import get_db_connection
 from app.repositories.interfaces import (
+    AvailabilityHoursRepository,
     BusinessServiceHoursRepository,
     PersonRepository,
     RoleRepository,
-    WorkingHoursRepository,
 )
 from app.repositories.sqlite_repositories import (
+    SQLiteAvailabilityHoursRepository,
     SQLiteBusinessServiceHoursRepository,
     SQLitePersonRepository,
     SQLiteRoleRepository,
-    SQLiteWorkingHoursRepository,
 )
+from app.services.availability_hours_service import AvailabilityHoursService
 from app.services.business_service_hours_service import BusinessServiceHoursService
 from app.services.calendar_service import CalendarService
 from app.services.person_service import PersonService
 from app.services.role_service import RoleService
-from app.services.working_hours_service import WorkingHoursService
 
 
 def get_person_repository(
@@ -35,10 +35,10 @@ def get_role_repository(
     yield SQLiteRoleRepository(conn)
 
 
-def get_working_hours_repository(
+def get_availability_hours_repository(
     conn: sqlite3.Connection = Depends(get_db_connection),
-) -> Generator[WorkingHoursRepository, None, None]:
-    yield SQLiteWorkingHoursRepository(conn)
+) -> Generator[AvailabilityHoursRepository, None, None]:
+    yield SQLiteAvailabilityHoursRepository(conn)
 
 
 def get_person_service(
@@ -53,12 +53,12 @@ def get_role_service(
     return RoleService(role_repo)
 
 
-def get_working_hours_service(
-    working_hours_repo: WorkingHoursRepository = Depends(get_working_hours_repository),
+def get_availability_hours_service(
+    availability_hours_repo: AvailabilityHoursRepository = Depends(get_availability_hours_repository),
     person_repo: PersonRepository = Depends(get_person_repository),
     role_repo: RoleRepository = Depends(get_role_repository),
-) -> WorkingHoursService:
-    return WorkingHoursService(working_hours_repo, person_repo, role_repo)
+) -> AvailabilityHoursService:
+    return AvailabilityHoursService(availability_hours_repo, person_repo, role_repo)
 
 
 def get_business_service_hours_repository(
@@ -77,9 +77,9 @@ def get_business_service_hours_service(
 
 
 def get_calendar_service(
-    working_hours_repo: WorkingHoursRepository = Depends(get_working_hours_repository),
+    availability_hours_repo: AvailabilityHoursRepository = Depends(get_availability_hours_repository),
     person_repo: PersonRepository = Depends(get_person_repository),
     role_repo: RoleRepository = Depends(get_role_repository),
 ) -> CalendarService:
-    return CalendarService(working_hours_repo, person_repo, role_repo)
+    return CalendarService(availability_hours_repo, person_repo, role_repo)
 

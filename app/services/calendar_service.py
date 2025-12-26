@@ -1,23 +1,23 @@
 from datetime import date, timedelta
 from uuid import UUID
 
-from app.domain.models import Person, Role, WorkingHours
+from app.domain.models import AvailabilityHours, Person, Role
 from app.domain.schemas import CalendarEntry
 from app.repositories.interfaces import (
+    AvailabilityHoursRepository,
     PersonRepository,
     RoleRepository,
-    WorkingHoursRepository,
 )
 
 
 class CalendarService:
     def __init__(
         self,
-        working_hours_repository: WorkingHoursRepository,
+        availability_hours_repository: AvailabilityHoursRepository,
         person_repository: PersonRepository,
         role_repository: RoleRepository,
     ):
-        self.working_hours_repository = working_hours_repository
+        self.availability_hours_repository = availability_hours_repository
         self.person_repository = person_repository
         self.role_repository = role_repository
 
@@ -25,7 +25,7 @@ class CalendarService:
         start_date = self._get_week_start_date(week, year)
         end_date = start_date + timedelta(days=6)
 
-        working_hours_list = self.working_hours_repository.get_by_date_range(
+        availability_hours_list = self.availability_hours_repository.get_by_date_range(
             start_date, end_date
         )
 
@@ -36,20 +36,20 @@ class CalendarService:
         for current_date in self._date_range(start_date, end_date):
             day_of_week = current_date.weekday()
 
-            for wh in working_hours_list:
-                if self._matches_date(wh, current_date, day_of_week):
-                    if wh.person_id not in people_cache:
-                        person = self.person_repository.get_by_id(wh.person_id)
+            for ah in availability_hours_list:
+                if self._matches_date(ah, current_date, day_of_week):
+                    if ah.person_id not in people_cache:
+                        person = self.person_repository.get_by_id(ah.person_id)
                         if person:
-                            people_cache[wh.person_id] = person
+                            people_cache[ah.person_id] = person
 
-                    if wh.role_id not in roles_cache:
-                        role = self.role_repository.get_by_id(wh.role_id)
+                    if ah.role_id not in roles_cache:
+                        role = self.role_repository.get_by_id(ah.role_id)
                         if role:
-                            roles_cache[wh.role_id] = role
+                            roles_cache[ah.role_id] = role
 
-                    person = people_cache.get(wh.person_id)
-                    role = roles_cache.get(wh.role_id)
+                    person = people_cache.get(ah.person_id)
+                    role = roles_cache.get(ah.role_id)
 
                     if person and role:
                         entries.append(
@@ -59,8 +59,8 @@ class CalendarService:
                                 person_name=person.name,
                                 role_id=role.id,
                                 role_name=role.name,
-                                start_time=wh.start_time,
-                                end_time=wh.end_time,
+                                start_time=ah.start_time,
+                                end_time=ah.end_time,
                             )
                         )
 
@@ -73,7 +73,7 @@ class CalendarService:
         else:
             end_date = date(year, month + 1, 1) - timedelta(days=1)
 
-        working_hours_list = self.working_hours_repository.get_by_date_range(
+        availability_hours_list = self.availability_hours_repository.get_by_date_range(
             start_date, end_date
         )
 
@@ -84,20 +84,20 @@ class CalendarService:
         for current_date in self._date_range(start_date, end_date):
             day_of_week = current_date.weekday()
 
-            for wh in working_hours_list:
-                if self._matches_date(wh, current_date, day_of_week):
-                    if wh.person_id not in people_cache:
-                        person = self.person_repository.get_by_id(wh.person_id)
+            for ah in availability_hours_list:
+                if self._matches_date(ah, current_date, day_of_week):
+                    if ah.person_id not in people_cache:
+                        person = self.person_repository.get_by_id(ah.person_id)
                         if person:
-                            people_cache[wh.person_id] = person
+                            people_cache[ah.person_id] = person
 
-                    if wh.role_id not in roles_cache:
-                        role = self.role_repository.get_by_id(wh.role_id)
+                    if ah.role_id not in roles_cache:
+                        role = self.role_repository.get_by_id(ah.role_id)
                         if role:
-                            roles_cache[wh.role_id] = role
+                            roles_cache[ah.role_id] = role
 
-                    person = people_cache.get(wh.person_id)
-                    role = roles_cache.get(wh.role_id)
+                    person = people_cache.get(ah.person_id)
+                    role = roles_cache.get(ah.role_id)
 
                     if person and role:
                         entries.append(
@@ -107,31 +107,31 @@ class CalendarService:
                                 person_name=person.name,
                                 role_id=role.id,
                                 role_name=role.name,
-                                start_time=wh.start_time,
-                                end_time=wh.end_time,
+                                start_time=ah.start_time,
+                                end_time=ah.end_time,
                             )
                         )
 
         return sorted(entries, key=lambda e: (e.date, e.start_time))
 
-    def _matches_date(self, wh: WorkingHours, current_date: date, day_of_week: int) -> bool:
-        if wh.specific_date:
-            return wh.specific_date == current_date
+    def _matches_date(self, ah: AvailabilityHours, current_date: date, day_of_week: int) -> bool:
+        if ah.specific_date:
+            return ah.specific_date == current_date
 
-        if wh.is_recurring and wh.day_of_week is not None:
-            if wh.day_of_week != day_of_week:
+        if ah.is_recurring and ah.day_of_week is not None:
+            if ah.day_of_week != day_of_week:
                 return False
 
-            if wh.start_date and current_date < wh.start_date:
+            if ah.start_date and current_date < ah.start_date:
                 return False
 
-            if wh.end_date and current_date > wh.end_date:
+            if ah.end_date and current_date > ah.end_date:
                 return False
 
             return True
 
-        if wh.start_date and wh.end_date:
-            return wh.start_date <= current_date <= wh.end_date
+        if ah.start_date and ah.end_date:
+            return ah.start_date <= current_date <= ah.end_date
 
         return False
 

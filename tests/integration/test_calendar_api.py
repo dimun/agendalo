@@ -24,7 +24,7 @@ def role_id(client: TestClient) -> str:
 
 def test_get_calendar_week(client: TestClient, person_id: str, role_id: str):
     client.post(
-        f"/api/people/{person_id}/working-hours",
+        f"/api/people/{person_id}/availability-hours",
         json={
             "role_id": role_id,
             "day_of_week": 0,
@@ -52,7 +52,7 @@ def test_get_calendar_week(client: TestClient, person_id: str, role_id: str):
 
 def test_get_calendar_month(client: TestClient, person_id: str, role_id: str):
     client.post(
-        f"/api/people/{person_id}/working-hours",
+        f"/api/people/{person_id}/availability-hours",
         json={
             "role_id": role_id,
             "day_of_week": 0,
@@ -74,7 +74,7 @@ def test_get_calendar_month_with_specific_date(
     client: TestClient, person_id: str, role_id: str
 ):
     client.post(
-        f"/api/people/{person_id}/working-hours",
+        f"/api/people/{person_id}/availability-hours",
         json={
             "role_id": role_id,
             "start_time": "10:00:00",
@@ -110,7 +110,7 @@ def test_get_calendar_week_multiple_people(client: TestClient, role_id: str):
     person2_id = person2_response.json()["id"]
 
     client.post(
-        f"/api/people/{person1_id}/working-hours",
+        f"/api/people/{person1_id}/availability-hours",
         json={
             "role_id": role_id,
             "day_of_week": 0,
@@ -121,7 +121,7 @@ def test_get_calendar_week_multiple_people(client: TestClient, role_id: str):
     )
 
     client.post(
-        f"/api/people/{person2_id}/working-hours",
+        f"/api/people/{person2_id}/availability-hours",
         json={
             "role_id": role_id,
             "day_of_week": 1,

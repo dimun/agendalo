@@ -3,11 +3,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.routes import (
+    availability_hours,
     business_service_hours,
     calendar,
     people,
     roles,
-    working_hours,
 )
 from app.database.connection import init_database
 
@@ -27,7 +27,7 @@ app = FastAPI(
 
 app.include_router(people.router)
 app.include_router(roles.router)
-app.include_router(working_hours.router)
+app.include_router(availability_hours.router)
 app.include_router(calendar.router)
 app.include_router(business_service_hours.router)
 

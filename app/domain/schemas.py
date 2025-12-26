@@ -30,7 +30,7 @@ class RoleResponse(BaseModel):
     description: str | None = None
 
 
-class WorkingHoursCreate(BaseModel):
+class AvailabilityHoursCreate(BaseModel):
     role_id: UUID
     day_of_week: int | None = None
     start_time: time
@@ -41,7 +41,7 @@ class WorkingHoursCreate(BaseModel):
     specific_date: date | None = None
 
 
-class WorkingHoursResponse(BaseModel):
+class AvailabilityHoursResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID

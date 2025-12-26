@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import date
 from uuid import UUID
 
-from app.domain.models import BusinessServiceHours, Person, Role, WorkingHours
+from app.domain.models import AvailabilityHours, BusinessServiceHours, Person, Role
 
 
 class PersonRepository(ABC):
@@ -41,25 +41,25 @@ class RoleRepository(ABC):
         pass
 
 
-class WorkingHoursRepository(ABC):
+class AvailabilityHoursRepository(ABC):
     @abstractmethod
-    def create(self, working_hours: WorkingHours) -> WorkingHours:
+    def create(self, availability_hours: AvailabilityHours) -> AvailabilityHours:
         pass
 
     @abstractmethod
-    def get_by_person(self, person_id: UUID) -> list[WorkingHours]:
+    def get_by_person(self, person_id: UUID) -> list[AvailabilityHours]:
         pass
 
     @abstractmethod
-    def get_by_role(self, role_id: UUID) -> list[WorkingHours]:
+    def get_by_role(self, role_id: UUID) -> list[AvailabilityHours]:
         pass
 
     @abstractmethod
-    def get_by_date_range(self, start_date: date, end_date: date) -> list[WorkingHours]:
+    def get_by_date_range(self, start_date: date, end_date: date) -> list[AvailabilityHours]:
         pass
 
     @abstractmethod
-    def delete(self, working_hours_id: UUID) -> bool:
+    def delete(self, availability_hours_id: UUID) -> bool:
         pass
 
 

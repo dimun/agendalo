@@ -2,12 +2,12 @@ import sqlite3
 from datetime import date, time
 from uuid import UUID, uuid4
 
-from app.domain.models import BusinessServiceHours, Person, Role, WorkingHours
+from app.domain.models import AvailabilityHours, BusinessServiceHours, Person, Role
 from app.repositories.interfaces import (
+    AvailabilityHoursRepository,
     BusinessServiceHoursRepository,
     PersonRepository,
     RoleRepository,
-    WorkingHoursRepository,
 )
 
 
@@ -104,55 +104,55 @@ class SQLiteRoleRepository(RoleRepository):
         ]
 
 
-class SQLiteWorkingHoursRepository(WorkingHoursRepository):
+class SQLiteAvailabilityHoursRepository(AvailabilityHoursRepository):
     def __init__(self, connection: sqlite3.Connection):
         self.conn = connection
 
-    def create(self, working_hours: WorkingHours) -> WorkingHours:
+    def create(self, availability_hours: AvailabilityHours) -> AvailabilityHours:
         cursor = self.conn.cursor()
         cursor.execute(
-            """INSERT INTO working_hours 
+            """INSERT INTO availability_hours 
                (id, person_id, role_id, day_of_week, start_time, end_time, 
                 start_date, end_date, is_recurring, specific_date) 
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                str(working_hours.id),
-                str(working_hours.person_id),
-                str(working_hours.role_id),
-                working_hours.day_of_week,
-                working_hours.start_time.isoformat(),
-                working_hours.end_time.isoformat(),
-                working_hours.start_date.isoformat() if working_hours.start_date else None,
-                working_hours.end_date.isoformat() if working_hours.end_date else None,
-                1 if working_hours.is_recurring else 0,
-                working_hours.specific_date.isoformat() if working_hours.specific_date else None,
+                str(availability_hours.id),
+                str(availability_hours.person_id),
+                str(availability_hours.role_id),
+                availability_hours.day_of_week,
+                availability_hours.start_time.isoformat(),
+                availability_hours.end_time.isoformat(),
+                availability_hours.start_date.isoformat() if availability_hours.start_date else None,
+                availability_hours.end_date.isoformat() if availability_hours.end_date else None,
+                1 if availability_hours.is_recurring else 0,
+                availability_hours.specific_date.isoformat() if availability_hours.specific_date else None,
             ),
         )
         self.conn.commit()
-        return working_hours
+        return availability_hours
 
-    def get_by_person(self, person_id: UUID) -> list[WorkingHours]:
+    def get_by_person(self, person_id: UUID) -> list[AvailabilityHours]:
         cursor = self.conn.cursor()
         cursor.execute(
-            "SELECT * FROM working_hours WHERE person_id = ?",
+            "SELECT * FROM availability_hours WHERE person_id = ?",
             (str(person_id),),
         )
         rows = cursor.fetchall()
-        return [self._row_to_working_hours(row) for row in rows]
+        return [self._row_to_availability_hours(row) for row in rows]
 
-    def get_by_role(self, role_id: UUID) -> list[WorkingHours]:
+    def get_by_role(self, role_id: UUID) -> list[AvailabilityHours]:
         cursor = self.conn.cursor()
         cursor.execute(
-            "SELECT * FROM working_hours WHERE role_id = ?",
+            "SELECT * FROM availability_hours WHERE role_id = ?",
             (str(role_id),),
         )
         rows = cursor.fetchall()
-        return [self._row_to_working_hours(row) for row in rows]
+        return [self._row_to_availability_hours(row) for row in rows]
 
-    def get_by_date_range(self, start_date: date, end_date: date) -> list[WorkingHours]:
+    def get_by_date_range(self, start_date: date, end_date: date) -> list[AvailabilityHours]:
         cursor = self.conn.cursor()
         cursor.execute(
-            """SELECT * FROM working_hours 
+            """SELECT * FROM availability_hours 
                WHERE (is_recurring = 1 AND day_of_week IS NOT NULL)
                OR (specific_date IS NOT NULL AND specific_date >= ? AND specific_date <= ?)
                OR (start_date IS NOT NULL AND end_date IS NOT NULL 
@@ -165,19 +165,19 @@ class SQLiteWorkingHoursRepository(WorkingHoursRepository):
             ),
         )
         rows = cursor.fetchall()
-        return [self._row_to_working_hours(row) for row in rows]
+        return [self._row_to_availability_hours(row) for row in rows]
 
-    def delete(self, working_hours_id: UUID) -> bool:
+    def delete(self, availability_hours_id: UUID) -> bool:
         cursor = self.conn.cursor()
         cursor.execute(
-            "DELETE FROM working_hours WHERE id = ?",
-            (str(working_hours_id),),
+            "DELETE FROM availability_hours WHERE id = ?",
+            (str(availability_hours_id),),
         )
         self.conn.commit()
         return cursor.rowcount > 0
 
-    def _row_to_working_hours(self, row: sqlite3.Row) -> WorkingHours:
-        return WorkingHours(
+    def _row_to_availability_hours(self, row: sqlite3.Row) -> AvailabilityHours:
+        return AvailabilityHours(
             id=UUID(row["id"]),
             person_id=UUID(row["person_id"]),
             role_id=UUID(row["role_id"]),

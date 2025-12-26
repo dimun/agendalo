@@ -36,7 +36,7 @@ def _get_test_db_connection() -> Generator[sqlite3.Connection, None, None]:
         """)
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS working_hours (
+            CREATE TABLE IF NOT EXISTS availability_hours (
                 id TEXT PRIMARY KEY,
                 person_id TEXT NOT NULL,
                 role_id TEXT NOT NULL,
@@ -76,7 +76,7 @@ def reset_test_db():
     global _shared_test_conn
     if _shared_test_conn:
         cursor = _shared_test_conn.cursor()
-        cursor.execute("DELETE FROM working_hours")
+        cursor.execute("DELETE FROM availability_hours")
         cursor.execute("DELETE FROM business_service_hours")
         cursor.execute("DELETE FROM people")
         cursor.execute("DELETE FROM roles")

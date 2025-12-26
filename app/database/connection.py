@@ -34,7 +34,7 @@ def init_database() -> None:
     """)
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS working_hours (
+        CREATE TABLE IF NOT EXISTS availability_hours (
             id TEXT PRIMARY KEY,
             person_id TEXT NOT NULL,
             role_id TEXT NOT NULL,

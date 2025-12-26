@@ -18,7 +18,7 @@ class Role:
 
 
 @dataclass
-class WorkingHours:
+class AvailabilityHours:
     id: UUID
     person_id: UUID
     role_id: UUID
