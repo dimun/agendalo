@@ -18,7 +18,7 @@ class ORToolsScheduler(Scheduler):
         year: int,
         strategy: str,
     ) -> list[Assignment]:
-        if not availability_hours or not business_service_hours:
+        if not self._has_valid_inputs(availability_hours, business_service_hours):
             return []
 
         date_range = self._get_date_range_for_weeks(weeks, year)
@@ -27,91 +27,213 @@ class ORToolsScheduler(Scheduler):
             availability_hours, date_range
         )
 
-        if not time_slots or not availability_slots:
+        if not self._has_valid_slots(time_slots, availability_slots):
             return []
 
         model = cp_model.CpModel()
+        person_ids = self._extract_person_ids(availability_hours)
+        assignments = self._create_decision_variables(model, person_ids, time_slots)
 
-        person_ids = {ah.person_id for ah in availability_hours}
-        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar] = {}
+        self._add_coverage_constraints(model, time_slots, person_ids, assignments)
+        self._add_availability_constraints(
+            model, person_ids, time_slots, assignments, availability_slots
+        )
+        self._add_no_overlap_constraints(
+            model, person_ids, time_slots, assignments
+        )
 
+        self._set_objective(model, strategy, time_slots, person_ids, assignments)
+
+        return self._solve_and_extract_assignments(
+            model, assignments, business_service_hours
+        )
+
+    def _has_valid_inputs(
+        self,
+        availability_hours: list[AvailabilityHours],
+        business_service_hours: list[BusinessServiceHours],
+    ) -> bool:
+        return bool(availability_hours and business_service_hours)
+
+    def _has_valid_slots(
+        self,
+        time_slots: List[Tuple[date, time, time]],
+        availability_slots: Set[Tuple[UUID, date, time, time]],
+    ) -> bool:
+        return bool(time_slots and availability_slots)
+
+    def _extract_person_ids(
+        self, availability_hours: list[AvailabilityHours]
+    ) -> Set[UUID]:
+        return {ah.person_id for ah in availability_hours}
+
+    def _create_decision_variables(
+        self,
+        model: cp_model.CpModel,
+        person_ids: Set[UUID],
+        time_slots: List[Tuple[date, time, time]],
+    ) -> Dict[Tuple[UUID, date, time, time], cp_model.IntVar]:
+        assignments = {}
         for person_id in person_ids:
             for slot_date, slot_start, slot_end in time_slots:
                 var_name = f"assign_{person_id}_{slot_date}_{slot_start}_{slot_end}"
                 assignments[(person_id, slot_date, slot_start, slot_end)] = (
                     model.NewBoolVar(var_name)
                 )
+        return assignments
 
+    def _add_coverage_constraints(
+        self,
+        model: cp_model.CpModel,
+        time_slots: List[Tuple[date, time, time]],
+        person_ids: Set[UUID],
+        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar],
+    ) -> None:
         for slot_date, slot_start, slot_end in time_slots:
-            person_assignments = [
-                assignments[(pid, slot_date, slot_start, slot_end)]
-                for pid in person_ids
-                if (pid, slot_date, slot_start, slot_end) in assignments
-            ]
+            person_assignments = self._get_person_assignments_for_slot(
+                slot_date, slot_start, slot_end, person_ids, assignments
+            )
             if person_assignments:
                 model.Add(sum(person_assignments) >= 1)
 
+    def _get_person_assignments_for_slot(
+        self,
+        slot_date: date,
+        slot_start: time,
+        slot_end: time,
+        person_ids: Set[UUID],
+        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar],
+    ) -> List[cp_model.IntVar]:
+        return [
+            assignments[(pid, slot_date, slot_start, slot_end)]
+            for pid in person_ids
+            if (pid, slot_date, slot_start, slot_end) in assignments
+        ]
+
+    def _add_availability_constraints(
+        self,
+        model: cp_model.CpModel,
+        person_ids: Set[UUID],
+        time_slots: List[Tuple[date, time, time]],
+        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar],
+        availability_slots: Set[Tuple[UUID, date, time, time]],
+    ) -> None:
         for person_id in person_ids:
             for slot_date, slot_start, slot_end in time_slots:
                 if (person_id, slot_date, slot_start, slot_end) not in assignments:
                     continue
 
-                is_available = self._is_person_available(
+                if not self._is_person_available(
                     person_id, slot_date, slot_start, slot_end, availability_slots
-                )
-                if not is_available:
-                    model.Add(assignments[(person_id, slot_date, slot_start, slot_end)] == 0)
+                ):
+                    model.Add(
+                        assignments[(person_id, slot_date, slot_start, slot_end)] == 0
+                    )
 
+    def _add_no_overlap_constraints(
+        self,
+        model: cp_model.CpModel,
+        person_ids: Set[UUID],
+        time_slots: List[Tuple[date, time, time]],
+        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar],
+    ) -> None:
         for person_id in person_ids:
             for slot_date, slot_start, slot_end in time_slots:
                 if (person_id, slot_date, slot_start, slot_end) not in assignments:
                     continue
 
-                overlapping_slots = self._get_overlapping_slots(
-                    slot_date, slot_start, slot_end, time_slots
+                self._add_overlap_constraints_for_slot(
+                    model,
+                    person_id,
+                    slot_date,
+                    slot_start,
+                    slot_end,
+                    time_slots,
+                    assignments,
                 )
-                for overlap_date, overlap_start, overlap_end in overlapping_slots:
-                    if (person_id, overlap_date, overlap_start, overlap_end) in assignments:
-                        if (overlap_date, overlap_start, overlap_end) != (
-                            slot_date,
-                            slot_start,
-                            slot_end,
-                        ):
-                            model.Add(
-                                assignments[(person_id, slot_date, slot_start, slot_end)]
-                                + assignments[
-                                    (person_id, overlap_date, overlap_start, overlap_end)
-                                ]
-                                <= 1
-                            )
 
+    def _add_overlap_constraints_for_slot(
+        self,
+        model: cp_model.CpModel,
+        person_id: UUID,
+        slot_date: date,
+        slot_start: time,
+        slot_end: time,
+        time_slots: List[Tuple[date, time, time]],
+        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar],
+    ) -> None:
+        overlapping_slots = self._get_overlapping_slots(
+            slot_date, slot_start, slot_end, time_slots
+        )
+        for overlap_date, overlap_start, overlap_end in overlapping_slots:
+            if (person_id, overlap_date, overlap_start, overlap_end) not in assignments:
+                continue
+
+            if (overlap_date, overlap_start, overlap_end) == (
+                slot_date,
+                slot_start,
+                slot_end,
+            ):
+                continue
+
+            model.Add(
+                assignments[(person_id, slot_date, slot_start, slot_end)]
+                + assignments[(person_id, overlap_date, overlap_start, overlap_end)]
+                <= 1
+            )
+
+    def _set_objective(
+        self,
+        model: cp_model.CpModel,
+        strategy: str,
+        time_slots: List[Tuple[date, time, time]],
+        person_ids: Set[UUID],
+        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar],
+    ) -> None:
         objective_terms = self._build_objective(
             model, strategy, time_slots, person_ids, assignments
         )
-
         if objective_terms:
             model.Maximize(sum(objective_terms))
 
+    def _solve_and_extract_assignments(
+        self,
+        model: cp_model.CpModel,
+        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar],
+        business_service_hours: list[BusinessServiceHours],
+    ) -> list[Assignment]:
         solver = cp_model.CpSolver()
         status = solver.Solve(model)
 
-        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            assignments_list = []
-            role_id = business_service_hours[0].role_id
-            for (person_id, slot_date, slot_start, slot_end), var in assignments.items():
-                if solver.Value(var) == 1:
-                    assignments_list.append(
-                        Assignment(
-                            person_id=person_id,
-                            date=slot_date,
-                            start_time=slot_start,
-                            end_time=slot_end,
-                            role_id=role_id,
-                        )
-                    )
-            return assignments_list
+        if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            return []
 
-        return []
+        return self._extract_assignments_from_solution(
+            solver, assignments, business_service_hours
+        )
+
+    def _extract_assignments_from_solution(
+        self,
+        solver: cp_model.CpSolver,
+        assignments: Dict[Tuple[UUID, date, time, time], cp_model.IntVar],
+        business_service_hours: list[BusinessServiceHours],
+    ) -> list[Assignment]:
+        assignments_list = []
+        role_id = business_service_hours[0].role_id
+
+        for (person_id, slot_date, slot_start, slot_end), var in assignments.items():
+            if solver.Value(var) == 1:
+                assignments_list.append(
+                    Assignment(
+                        person_id=person_id,
+                        date=slot_date,
+                        start_time=slot_start,
+                        end_time=slot_end,
+                        role_id=role_id,
+                    )
+                )
+
+        return assignments_list
 
     def _get_date_range_for_weeks(self, weeks: list[int], year: int) -> List[date]:
         dates = []
