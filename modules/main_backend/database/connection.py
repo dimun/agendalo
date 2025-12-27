@@ -5,7 +5,7 @@ from modules.main_backend.config import settings
 
 
 def get_db_connection() -> Generator[sqlite3.Connection, None, None]:
-    conn = sqlite3.connect(settings.get_database_path())
+    conn = sqlite3.connect(settings.get_database_path(), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
