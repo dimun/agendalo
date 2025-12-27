@@ -90,14 +90,9 @@ export function CalendarWeekView({
     });
   };
 
-  const getEventsForDay = (date: Date) => {
-    return events.filter((event) => isSameDay(event.date, date));
-  };
-
   const getBusinessHoursForSlot = (date: Date, slotIndex: number) => {
     const hour = Math.floor(slotIndex / SLOTS_PER_HOUR);
     const minute = (slotIndex % SLOTS_PER_HOUR) * 30;
-    const slotTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
     
     return events.filter((event) => {
       if (event.type !== 'business') return false;
