@@ -364,7 +364,7 @@ export function CalendarWeekView({
 
                        {/* Preview of dragged event */}
                        {(() => {
-                         const preview = getPreviewEvent(day, hour, minute, dragOverState.event);
+                         const preview = getPreviewEvent(day, hour, minute);
                          if (!preview) return null;
                          return (
                            <div
@@ -377,7 +377,7 @@ export function CalendarWeekView({
                                  : preview.event.role_name}
                              </div>
                              <div className="text-xs opacity-75">
-                               {String(hour).padStart(2, '0')}:{String(minute).padStart(2, '0')} - {String(Math.floor((hour * 60 + minute + ((parseInt(preview.event.end_time.split(':')[0]) * 60 + parseInt(preview.event.end_time.split(':')[1])) - (parseInt(preview.event.start_time.split(':')[0]) * 60 + parseInt(preview.event.start_time.split(':')[1])))) / 60)).padStart(2, '0')}:{String(((hour * 60 + minute + ((parseInt(preview.event.end_time.split(':')[0]) * 60 + parseInt(preview.event.end_time.split(':')[1])) - (parseInt(preview.event.start_time.split(':')[0]) * 60 + parseInt(preview.event.start_time.split(':')[1])))) % 60)).padStart(2, '0')}
+                               {preview.startTime} - {preview.endTime}
                              </div>
                            </div>
                          );
