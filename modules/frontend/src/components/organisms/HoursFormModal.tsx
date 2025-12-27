@@ -11,7 +11,7 @@ import { DatePicker } from '../molecules/DatePicker';
 interface HoursFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: AvailabilityHoursCreate | BusinessServiceHoursCreate) => Promise<void>;
+  onSubmit: (data: AvailabilityHoursCreate | BusinessServiceHoursCreate, personId?: string) => Promise<void>;
   type: 'availability' | 'business';
   people: Person[];
   roles: Role[];
@@ -74,7 +74,7 @@ export function HoursFormModal({
           start_date: isRecurring && startDate ? startDate : null,
           end_date: isRecurring && endDate ? endDate : null,
         };
-        await onSubmit(data);
+        await onSubmit(data, personId);
       } else {
         const data: BusinessServiceHoursCreate = {
           role_id: roleId,
