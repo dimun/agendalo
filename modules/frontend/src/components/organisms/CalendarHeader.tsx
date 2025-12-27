@@ -1,4 +1,4 @@
-import type { CalendarView, Person, Role } from '../../types/calendar';
+import type { CalendarView, Person } from '../../types/calendar';
 import { Button } from '../atoms/Button';
 import { Select } from '../atoms/Select';
 
@@ -9,13 +9,9 @@ interface CalendarHeaderProps {
   onPrevious: () => void;
   onNext: () => void;
   onToday: () => void;
-  roles: Role[];
   people: Person[];
-  selectedRoleId: string | null;
   selectedPersonId: string | null;
-  onRoleChange: (roleId: string | null) => void;
   onPersonChange: (personId: string | null) => void;
-  showPersonSelector?: boolean;
 }
 
 export function CalendarHeader({
@@ -25,13 +21,9 @@ export function CalendarHeader({
   onPrevious,
   onNext,
   onToday,
-  roles,
   people,
-  selectedRoleId,
   selectedPersonId,
-  onRoleChange,
   onPersonChange,
-  showPersonSelector = false,
 }: CalendarHeaderProps) {
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-3">
@@ -79,32 +71,17 @@ export function CalendarHeader({
           </div>
 
           <Select
-            value={selectedRoleId || ''}
-            onChange={(e) => onRoleChange(e.target.value || null)}
+            value={selectedPersonId || ''}
+            onChange={(e) => onPersonChange(e.target.value || null)}
             className="w-48"
           >
-            <option value="">All Roles</option>
-            {roles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name}
+            <option value="">All People</option>
+            {people.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}
               </option>
             ))}
           </Select>
-
-          {showPersonSelector && (
-            <Select
-              value={selectedPersonId || ''}
-              onChange={(e) => onPersonChange(e.target.value || null)}
-              className="w-48"
-            >
-              <option value="">All People</option>
-              {people.map((person) => (
-                <option key={person.id} value={person.id}>
-                  {person.name}
-                </option>
-              ))}
-            </Select>
-          )}
         </div>
       </div>
     </div>

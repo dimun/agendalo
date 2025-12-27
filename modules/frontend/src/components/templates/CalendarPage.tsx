@@ -108,13 +108,9 @@ export function CalendarPage() {
         onPrevious={calendar.navigatePrevious}
         onNext={calendar.navigateNext}
         onToday={calendar.navigateToToday}
-        roles={hours.roles}
         people={hours.people}
-        selectedRoleId={effectiveRoleId}
         selectedPersonId={hours.selectedPersonId}
-        onRoleChange={hours.setSelectedRoleId}
         onPersonChange={hours.setSelectedPersonId}
-        showPersonSelector={modalType === 'availability'}
       />
 
       {hours.roles.length > 0 && (
