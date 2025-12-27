@@ -1,5 +1,6 @@
 import type { CalendarEvent } from '../../../types/calendar';
 import { TOTAL_SLOTS } from './utils';
+import { getRoleColor } from '../../../utils/roleColors';
 
 interface BusinessHoursBlockProps {
   event: CalendarEvent;
@@ -17,6 +18,14 @@ export function BusinessHoursBlock({
   const topPercent = (startSlot / TOTAL_SLOTS) * 100;
   const heightPercent = ((endSlot - startSlot) / TOTAL_SLOTS) * 100;
   const roleName = event.role_name || 'Business Hours';
+  const roleColor = getRoleColor(event.role_id);
+
+  const hexToRgba = (hex: string, alpha: number): string => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
   return (
     <div
@@ -26,15 +35,15 @@ export function BusinessHoursBlock({
         left: 0,
         right: 0,
         height: `${heightPercent}%`,
-        border: '4px solid #4ade80',
+        border: `4px solid ${roleColor.primary}`,
         borderRadius: '4px',
         boxSizing: 'border-box',
-        backgroundColor: 'rgba(240,253,244, 0.3)',
+        backgroundColor: hexToRgba(roleColor.light, 0.3),
         zIndex: 5,
       }}
     >
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span className="text-xs text-green-700 font-medium opacity-80 select-none">
+        <span className="text-xs font-medium opacity-80 select-none" style={{ color: roleColor.text }}>
           {roleName} Business Hours
         </span>
       </div>
