@@ -354,6 +354,7 @@ export function CalendarPage() {
             currentDate={calendar.currentDate}
             events={calendarEvents}
             selectedRoleId={effectiveRoleId}
+            mode={mode}
             onTimeSlotClick={mode === 'planning' ? handleTimeSlotClick : undefined}
             onEventClick={handleEventClick}
             onEventDragStart={mode === 'planning' ? handleEventDragStart : undefined}

@@ -9,6 +9,7 @@ interface DayColumnProps {
   date: Date;
   events: CalendarEvent[];
   selectedRoleId: string | null;
+  mode?: 'planning' | 'schedule';
   dragOverState: {
     date: Date | null;
     hour: number | null;
@@ -38,6 +39,7 @@ export function DayColumn({
   date,
   events,
   selectedRoleId,
+  mode = 'planning',
   dragOverState,
   onTimeSlotClick,
   onEventClick,
@@ -48,9 +50,9 @@ export function DayColumn({
   onDrop,
   setDragOverState,
 }: DayColumnProps) {
-  const businessBlocks = getBusinessHoursBlocks(events, date, selectedRoleId);
-  const availabilityEvents = getAvailabilityEventsForDay(events, date, selectedRoleId);
-  const scheduleEvents = getScheduleEventsForDay(events, date, selectedRoleId);
+  const businessBlocks = mode === 'planning' ? getBusinessHoursBlocks(events, date, selectedRoleId) : [];
+  const availabilityEvents = mode === 'planning' ? getAvailabilityEventsForDay(events, date, selectedRoleId) : [];
+  const scheduleEvents = mode === 'schedule' ? getScheduleEventsForDay(events, date, selectedRoleId) : [];
 
   if (scheduleEvents.length > 0) {
     console.log('Schedule events for', date.toISOString(), ':', scheduleEvents);

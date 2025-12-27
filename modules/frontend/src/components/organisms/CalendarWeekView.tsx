@@ -10,6 +10,7 @@ interface CalendarWeekViewProps {
   currentDate: Date;
   events: CalendarEvent[];
   selectedRoleId: string | null;
+  mode?: 'planning' | 'schedule';
   onTimeSlotClick?: (date: Date, hour: number, minute: number) => void;
   onEventClick: (event: CalendarEvent) => void;
   onEventDragStart?: (event: CalendarEvent, e: React.DragEvent) => void;
@@ -30,6 +31,7 @@ export function CalendarWeekView({
   currentDate,
   events,
   selectedRoleId,
+  mode = 'planning',
   onTimeSlotClick,
   onEventClick,
   onEventDragStart,
@@ -99,6 +101,7 @@ export function CalendarWeekView({
             date={day}
             events={events}
             selectedRoleId={selectedRoleId}
+            mode={mode}
             dragOverState={dragOverState}
             onTimeSlotClick={onTimeSlotClick}
             onEventClick={onEventClick}
