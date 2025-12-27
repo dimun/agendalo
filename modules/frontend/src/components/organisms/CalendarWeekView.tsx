@@ -65,10 +65,11 @@ export function CalendarWeekView({
     });
     
     // Assign position to each event
+    const margin = 1; // 1% margin between events
     return dayEvents.map((event) => {
       const columnIndex = columns.findIndex((col) => col.includes(event));
-      const columnWidth = 100 / columns.length;
-      const left = columnIndex * columnWidth;
+      const columnWidth = (100 - (columns.length - 1) * margin) / columns.length;
+      const left = columnIndex * (columnWidth + margin);
       
       const { startSlot, endSlot } = getEventSlotRange(event);
       const topPercent = (startSlot / (24 * SLOTS_PER_HOUR)) * 100;
