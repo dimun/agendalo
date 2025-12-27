@@ -395,8 +395,14 @@ export function CalendarWeekView({
                          );
                        })}
 
-                {/* Preview of dragged event */}
+                {/* Preview of dragged event - only render in the correct day column */}
                 {(() => {
+                  // Only render preview if this is the correct day column
+                  if (!dragOverState.date) return null;
+                  const normalizedDragDate = normalizeDate(dragOverState.date);
+                  const normalizedDay = normalizeDate(day);
+                  if (normalizedDragDate.getTime() !== normalizedDay.getTime()) return null;
+                  
                   const preview = getPreviewEvent(day);
                   if (!preview) return null;
                   return (
