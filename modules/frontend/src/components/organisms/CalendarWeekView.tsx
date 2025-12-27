@@ -235,23 +235,34 @@ export function CalendarWeekView({
     const eventId = e.dataTransfer.getData('eventId') || dragOverState.eventId;
     if (eventId && onEventDrop) {
       // Always use dragOverState values if available - these are what the preview is showing
-      if (dragOverState.date && dragOverState.hour !== null && dragOverState.minute !== null) {
+      if (dragOverState.date && dragOverState.hour !== null && dragOverState.minute !== null && dragOverState.dateString) {
         // Reconstruct the date from the dateString to ensure we use the correct local date
-        const [year, month, day] = dragOverState.dateString!.split('-').map(Number);
-        const dropDate = new Date(year, month - 1, day); // month is 0-indexed
+        // Use the dateString directly to create a date in local timezone
+        const [year, month, day] = dragOverState.dateString.split('-').map(Number);
+        // Create date using local timezone (year, month-1, day) - this creates midnight local time
+        const dropDate = new Date(year, month - 1, day, 12, 0, 0); // Use noon to avoid timezone edge cases
         
         console.log('Dropping with dragOverState:', {
           dateString: dragOverState.dateString,
           reconstructedDate: dropDate.toISOString(),
           reconstructedDateLocal: getDateString(dropDate),
+          reconstructedDateLocalFull: `${dropDate.getFullYear()}-${String(dropDate.getMonth() + 1).padStart(2, '0')}-${String(dropDate.getDate()).padStart(2, '0')}`,
           hour: dragOverState.hour,
           minute: dragOverState.minute,
           dayParam: date.toISOString(),
-          dayParamLocal: getDateString(date),
-          dayParamNormalized: normalizeDate(date).toISOString(),
-          dayParamNormalizedLocal: getDateString(normalizeDate(date))
+          dayParamLocal: getDateString(date)
         });
-        onEventDrop(eventId, dropDate, dragOverState.hour, dragOverState.minute);
+        
+        // Use the date from dragOverState which is already normalized to local midnight
+        // But ensure we're using the dateString to verify it matches
+        const finalDate = normalizeDate(dropDate);
+        console.log('Final drop date:', {
+          finalDateISO: finalDate.toISOString(),
+          finalDateLocal: getDateString(finalDate),
+          matchesDateString: getDateString(finalDate) === dragOverState.dateString
+        });
+        
+        onEventDrop(eventId, finalDate, dragOverState.hour, dragOverState.minute);
       } else {
         // Fallback to parameters if dragOverState is not available
         const normalizedDate = normalizeDate(date);
