@@ -153,8 +153,8 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
         };
         
         // Update in local state (for local gateway)
-        if ('updateAvailabilityHours' in gateway) {
-          await (gateway as any).updateAvailabilityHours(originalHoursId, updatedHours);
+        if ('updateAvailabilityHours' in gateway && gateway.updateAvailabilityHours) {
+          await gateway.updateAvailabilityHours(originalHoursId, updatedHours);
         } else {
           // Fallback: remove old and add new
           setAvailabilityHours((prev) => prev.filter(ah => ah.id !== originalHoursId));
