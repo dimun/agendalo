@@ -45,6 +45,12 @@ export function CalendarWeekView({
     eventId: null,
   });
 
+  const normalizeDate = (date: Date): Date => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const daysRaw = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
   // Normalize all days to midnight to avoid timezone issues
@@ -182,12 +188,6 @@ export function CalendarWeekView({
       if (selectedRoleId && event.role_id !== selectedRoleId) return false;
       return true;
     });
-  };
-
-  const normalizeDate = (date: Date): Date => {
-    const normalized = new Date(date);
-    normalized.setHours(0, 0, 0, 0);
-    return normalized;
   };
 
   const handleDragEnter = (date: Date, hour: number, minute: number) => {
