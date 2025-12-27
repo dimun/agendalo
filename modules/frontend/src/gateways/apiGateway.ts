@@ -19,11 +19,8 @@ export class ApiGateway implements IGateway {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
-    if (response.status === 204 || response.status === 201) {
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        return undefined as T;
-      }
+    if (response.status === 204) {
+      return undefined as T;
     }
 
     const text = await response.text();
