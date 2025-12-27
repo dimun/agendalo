@@ -110,6 +110,47 @@ export function CalendarWeekView({
     });
   };
 
+  const getBusinessHoursBlocks = (date: Date) => {
+    const businessEvents = events.filter((event) => {
+      if (event.type !== 'business') return false;
+      if (!isSameDay(event.date, date)) return false;
+      if (selectedRoleId && event.role_id !== selectedRoleId) return false;
+      return true;
+    });
+
+    // Group consecutive business hours into blocks
+    const blocks: Array<{ startSlot: number; endSlot: number }> = [];
+    
+    businessEvents.forEach((event) => {
+      const [startHour, startMinute] = event.start_time.split(':').map(Number);
+      const [endHour, endMinute] = event.end_time.split(':').map(Number);
+      
+      const startSlot = startHour * SLOTS_PER_HOUR + (startMinute >= 30 ? 1 : 0);
+      const endSlot = endHour * SLOTS_PER_HOUR + (endMinute > 30 ? 1 : 0);
+      
+      blocks.push({ startSlot, endSlot });
+    });
+
+    // Merge overlapping or adjacent blocks
+    if (blocks.length === 0) return [];
+    
+    blocks.sort((a, b) => a.startSlot - b.startSlot);
+    const merged: Array<{ startSlot: number; endSlot: number }> = [blocks[0]];
+    
+    for (let i = 1; i < blocks.length; i++) {
+      const last = merged[merged.length - 1];
+      const current = blocks[i];
+      
+      if (current.startSlot <= last.endSlot) {
+        last.endSlot = Math.max(last.endSlot, current.endSlot);
+      } else {
+        merged.push(current);
+      }
+    }
+    
+    return merged;
+  };
+
   const getAvailabilityEventsForDay = (date: Date) => {
     return events.filter((event) => {
       if (event.type !== 'availability') return false;
@@ -140,43 +181,61 @@ export function CalendarWeekView({
           ))}
         </div>
 
-        {days.map((day) => (
-          <div key={day.toISOString()} className="flex-1 border-r border-gray-200 relative">
-            <div className="relative" style={{ height: `${24 * 48}px` }}>
-              {Array.from({ length: 24 * SLOTS_PER_HOUR }).map((_, slotIndex) => {
-                const hour = Math.floor(slotIndex / SLOTS_PER_HOUR);
-                const minute = (slotIndex % SLOTS_PER_HOUR) * 30;
-                const businessHours = getBusinessHoursForSlot(day, slotIndex);
-                const hasBusinessHours = businessHours.length > 0;
-                
-                return (
-                  <div
-                    key={slotIndex}
-                    className={`border-b cursor-pointer transition-colors relative ${
-                      hasBusinessHours
-                        ? 'bg-green-50 hover:bg-green-100 border-green-400 border-2'
-                        : 'border-gray-100 hover:bg-blue-50'
-                    }`}
-                    style={{ 
-                      height: `${100 / (24 * SLOTS_PER_HOUR)}%`,
-                      ...(hasBusinessHours && {
-                        borderWidth: '4px',
-                        borderColor: '#4ade80', // green-400
-                        borderStyle: 'solid',
-                      })
-                    }}
-                    onClick={() => onTimeSlotClick(day, hour, minute)}
-                  >
-                    {hasBusinessHours && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className="text-xs text-green-700 font-medium opacity-40 select-none">
-                          Business Hours
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+        {days.map((day) => {
+          const businessBlocks = getBusinessHoursBlocks(day);
+          
+          return (
+            <div key={day.toISOString()} className="flex-1 border-r border-gray-200 relative">
+              <div className="relative" style={{ height: `${24 * 48}px` }}>
+                {Array.from({ length: 24 * SLOTS_PER_HOUR }).map((_, slotIndex) => {
+                  const hour = Math.floor(slotIndex / SLOTS_PER_HOUR);
+                  const minute = (slotIndex % SLOTS_PER_HOUR) * 30;
+                  const businessHours = getBusinessHoursForSlot(day, slotIndex);
+                  const hasBusinessHours = businessHours.length > 0;
+                  
+                  return (
+                    <div
+                      key={slotIndex}
+                      className={`border-b cursor-pointer transition-colors relative ${
+                        hasBusinessHours
+                          ? 'bg-green-50 hover:bg-green-100'
+                          : 'border-gray-100 hover:bg-blue-50'
+                      }`}
+                      style={{ height: `${100 / (24 * SLOTS_PER_HOUR)}%` }}
+                      onClick={() => onTimeSlotClick(day, hour, minute)}
+                    >
+                      {hasBusinessHours && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <span className="text-xs text-green-700 font-medium opacity-40 select-none">
+                            Business Hours
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Render borders around business hours blocks */}
+                {businessBlocks.map((block, blockIndex) => {
+                  const topPercent = (block.startSlot / (24 * SLOTS_PER_HOUR)) * 100;
+                  const heightPercent = ((block.endSlot - block.startSlot) / (24 * SLOTS_PER_HOUR)) * 100;
+                  
+                  return (
+                    <div
+                      key={`block-${blockIndex}`}
+                      className="absolute pointer-events-none"
+                      style={{
+                        top: `${topPercent}%`,
+                        left: 0,
+                        right: 0,
+                        height: `${heightPercent}%`,
+                        border: '4px solid #4ade80', // green-400
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  );
+                })}
 
               {layoutEvents(getAvailabilityEventsForDay(day)).map(({ event, style }) => {
                 // Make availability events 5px smaller
