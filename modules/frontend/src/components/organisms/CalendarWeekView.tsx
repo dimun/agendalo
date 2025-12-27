@@ -463,9 +463,6 @@ export function CalendarWeekView({
                              onDragStart={(e) => {
                                onEventDragStart(event, e);
                                setDragOverState({ date: null, hour: null, minute: null, event: event, eventId: event.id });
-                               if (onDragStartCapture) {
-                                 onDragStartCapture(event.id, event);
-                               }
                              }}
                              style={adjustedStyle}
                            />
