@@ -12,6 +12,7 @@ interface CalendarWeekViewProps {
   onEventClick: (event: CalendarEvent) => void;
   onEventDragStart: (event: CalendarEvent, e: React.DragEvent) => void;
   onEventDrop?: (eventId: string, date: Date, hour: number, minute: number) => void;
+  onDragStartCapture?: (eventId: string, event: CalendarEvent) => void;
 }
 
 interface DragOverState {
@@ -19,6 +20,7 @@ interface DragOverState {
   hour: number | null;
   minute: number | null;
   event: CalendarEvent | null;
+  eventId: string | null;
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -32,12 +34,14 @@ export function CalendarWeekView({
   onEventClick,
   onEventDragStart,
   onEventDrop,
+  onDragStartCapture,
 }: CalendarWeekViewProps) {
   const [dragOverState, setDragOverState] = useState<DragOverState>({
     date: null,
     hour: null,
     minute: null,
     event: null,
+    eventId: null,
   });
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -177,22 +181,25 @@ export function CalendarWeekView({
     });
   };
 
-  const handleDragEnter = (date: Date, hour: number, minute: number, event: CalendarEvent | null) => {
-    setDragOverState({ date, hour, minute, event });
+  const handleDragEnter = (date: Date, hour: number, minute: number) => {
+    if (dragOverState.eventId) {
+      const event = events.find(ev => ev.id === dragOverState.eventId);
+      setDragOverState({ ...dragOverState, date, hour, minute, event: event || null });
+    }
   };
 
   const handleDragLeave = () => {
-    setDragOverState({ date: null, hour: null, minute: null, event: null });
+    setDragOverState({ date: null, hour: null, minute: null, event: null, eventId: null });
   };
 
   const handleDrop = (e: React.DragEvent, date: Date, hour: number, minute: number) => {
     e.preventDefault();
     e.stopPropagation();
-    const eventId = e.dataTransfer.getData('eventId');
+    const eventId = e.dataTransfer.getData('eventId') || dragOverState.eventId;
     if (eventId && onEventDrop) {
       onEventDrop(eventId, date, hour, minute);
     }
-    setDragOverState({ date: null, hour: null, minute: null, event: null });
+    setDragOverState({ date: null, hour: null, minute: null, event: null, eventId: null });
   };
 
   const getPreviewEvent = (date: Date) => {
@@ -278,14 +285,7 @@ export function CalendarWeekView({
                         e.preventDefault();
                         e.stopPropagation();
                         e.dataTransfer.dropEffect = 'move';
-                        
-                        // Get the dragged event from dataTransfer
-                        const eventId = e.dataTransfer.getData('eventId');
-                        const draggedEvent = eventId ? events.find(ev => ev.id === eventId) : null;
-                        
-                        if (draggedEvent) {
-                          handleDragEnter(day, hour, minute, draggedEvent);
-                        }
+                        handleDragEnter(day, hour, minute);
                       }}
                       onDragLeave={(e) => {
                         // Only clear if we're leaving the time slot (not entering a child)
@@ -359,7 +359,10 @@ export function CalendarWeekView({
                              onClick={() => onEventClick(event)}
                              onDragStart={(e) => {
                                onEventDragStart(event, e);
-                               setDragOverState({ date: null, hour: null, minute: null, event: null });
+                               setDragOverState({ date: null, hour: null, minute: null, event: event, eventId: event.id });
+                               if (onDragStartCapture) {
+                                 onDragStartCapture(event.id, event);
+                               }
                              }}
                              style={adjustedStyle}
                            />
