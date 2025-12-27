@@ -10,7 +10,7 @@ import type { CalendarEvent, AvailabilityHoursCreate, BusinessServiceHoursCreate
 import { ApiGateway } from '../../gateways/apiGateway';
 import { LocalGateway } from '../../gateways/localGateway';
 
-const USE_LOCAL_GATEWAY = import.meta.env.VITE_USE_LOCAL_GATEWAY === 'true';
+const USE_LOCAL_GATEWAY = import.meta.env.VITE_USE_LOCAL_GATEWAY !== 'false';
 const gateway = USE_LOCAL_GATEWAY ? new LocalGateway() : new ApiGateway();
 
 export function CalendarPage() {
