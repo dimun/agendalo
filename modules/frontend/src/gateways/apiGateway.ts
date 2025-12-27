@@ -101,5 +101,11 @@ export class ApiGateway implements IGateway {
       body: JSON.stringify(data),
     });
   }
+
+  async deleteBusinessServiceHours(id: string): Promise<void> {
+    await this.fetchJson<void>(`${API_BASE_URL}/business-service-hours/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 

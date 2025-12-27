@@ -140,6 +140,25 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
     [gateway, loadBusinessServiceHours]
   );
 
+  const deleteBusinessServiceHours = useCallback(
+    async (eventId: string) => {
+      try {
+        const datePattern = /-\d{4}-\d{2}-\d{2}$/;
+        const originalHoursId = datePattern.test(eventId) 
+          ? eventId.replace(datePattern, '')
+          : eventId;
+        
+        await gateway.deleteBusinessServiceHours(originalHoursId);
+        setBusinessServiceHours((prev) => prev.filter(bsh => bsh.id !== originalHoursId));
+        await loadBusinessServiceHours();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete business service hours');
+        throw err;
+      }
+    },
+    [gateway, loadBusinessServiceHours]
+  );
+
   const updateAvailabilityHours = useCallback(
     async (eventId: string, data: AvailabilityHoursCreate, personId?: string) => {
       try {
@@ -199,6 +218,7 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
     createAvailabilityHours,
     createBusinessServiceHours,
     createBusinessServiceHoursBulk,
+    deleteBusinessServiceHours,
     updateAvailabilityHours,
     refresh: () => {
       loadAvailabilityHours();

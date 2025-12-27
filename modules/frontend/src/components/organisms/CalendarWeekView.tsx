@@ -12,6 +12,7 @@ interface CalendarWeekViewProps {
   onEventClick: (event: CalendarEvent) => void;
   onEventDragStart: (event: CalendarEvent, e: React.DragEvent) => void;
   onEventDrop?: (eventId: string, date: Date, hour: number, minute: number) => void;
+  onBusinessHoursClick?: (event: CalendarEvent) => void;
 }
 
 interface DragOverState {
@@ -34,6 +35,7 @@ export function CalendarWeekView({
   onEventClick,
   onEventDragStart,
   onEventDrop,
+  onBusinessHoursClick,
 }: CalendarWeekViewProps) {
   const [dragOverState, setDragOverState] = useState<DragOverState>({
     date: null,
@@ -154,37 +156,15 @@ export function CalendarWeekView({
       return true;
     });
 
-    // Group consecutive business hours into blocks
-    const blocks: Array<{ startSlot: number; endSlot: number }> = [];
-    
-    businessEvents.forEach((event) => {
+    return businessEvents.map((event) => {
       const [startHour, startMinute] = event.start_time.split(':').map(Number);
       const [endHour, endMinute] = event.end_time.split(':').map(Number);
       
       const startSlot = startHour * SLOTS_PER_HOUR + (startMinute >= 30 ? 1 : 0);
       const endSlot = endHour * SLOTS_PER_HOUR + (endMinute > 30 ? 1 : 0);
       
-      blocks.push({ startSlot, endSlot });
+      return { event, startSlot, endSlot };
     });
-
-    // Merge overlapping or adjacent blocks
-    if (blocks.length === 0) return [];
-    
-    blocks.sort((a, b) => a.startSlot - b.startSlot);
-    const merged: Array<{ startSlot: number; endSlot: number }> = [blocks[0]];
-    
-    for (let i = 1; i < blocks.length; i++) {
-      const last = merged[merged.length - 1];
-      const current = blocks[i];
-      
-      if (current.startSlot <= last.endSlot) {
-        last.endSlot = Math.max(last.endSlot, current.endSlot);
-      } else {
-        merged.push(current);
-      }
-    }
-    
-    return merged;
   };
 
   const getAvailabilityEventsForDay = (date: Date) => {
@@ -382,7 +362,7 @@ export function CalendarWeekView({
                   );
                 })}
 
-                {/* Render borders around business hours blocks */}
+                {/* Render clickable business hours blocks */}
                 {businessBlocks.map((block, blockIndex) => {
                   const topPercent = (block.startSlot / (24 * SLOTS_PER_HOUR)) * 100;
                   const heightPercent = ((block.endSlot - block.startSlot) / (24 * SLOTS_PER_HOUR)) * 100;
@@ -390,7 +370,7 @@ export function CalendarWeekView({
                   return (
                     <div
                       key={`block-${blockIndex}`}
-                      className="absolute pointer-events-none"
+                      className="absolute cursor-pointer hover:opacity-80 transition-opacity"
                       style={{
                         top: `${topPercent}%`,
                         left: 0,
@@ -399,6 +379,13 @@ export function CalendarWeekView({
                         border: '4px solid #4ade80', // green-400
                         borderRadius: '4px',
                         boxSizing: 'border-box',
+                        zIndex: 5,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onBusinessHoursClick) {
+                          onBusinessHoursClick(block.event);
+                        }
                       }}
                     />
                   );

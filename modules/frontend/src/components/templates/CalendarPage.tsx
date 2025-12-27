@@ -51,6 +51,29 @@ export function CalendarPage() {
     setModalOpen(true);
   };
 
+  const handleBusinessHoursClick = async (event: CalendarEvent) => {
+    if (event.type !== 'business') return;
+    
+    const roleName = event.role_name || 'Business Hours';
+    const dayName = event.day_of_week !== null 
+      ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][event.day_of_week]
+      : 'Specific Date';
+    
+    const confirmMessage = `Delete business hours for ${roleName}?\n\n` +
+      `Day: ${dayName}\n` +
+      `Time: ${event.start_time} - ${event.end_time}`;
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        setError(null);
+        await hours.deleteBusinessServiceHours(event.id);
+        hours.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete business hours');
+      }
+    }
+  };
+
   const handleAddAvailability = () => {
     setModalType('availability');
     setModalOpen(true);
@@ -216,6 +239,7 @@ export function CalendarPage() {
             onEventClick={handleEventClick}
             onEventDragStart={handleEventDragStart}
             onEventDrop={handleEventDrop}
+            onBusinessHoursClick={handleBusinessHoursClick}
           />
         ) : (
           <CalendarMonthView

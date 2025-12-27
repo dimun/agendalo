@@ -11,5 +11,6 @@ export interface IGateway {
   getBusinessServiceHours(filters: HoursFilters): Promise<BusinessServiceHours[]>;
   createBusinessServiceHours(data: BusinessServiceHoursCreate): Promise<BusinessServiceHours>;
   createBusinessServiceHoursBulk(data: BusinessServiceHoursBulkCreate): Promise<BusinessServiceHours[]>;
+  deleteBusinessServiceHours(id: string): Promise<void>;
 }
 

@@ -147,5 +147,14 @@ export class LocalGateway implements IGateway {
 
     return Promise.resolve(created);
   }
+
+  async deleteBusinessServiceHours(id: string): Promise<void> {
+    const index = mockBusinessServiceHours.findIndex((bsh) => bsh.id === id);
+    if (index === -1) {
+      throw new Error('Business service hours not found');
+    }
+    mockBusinessServiceHours.splice(index, 1);
+    return Promise.resolve();
+  }
 }
 
