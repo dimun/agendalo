@@ -3,6 +3,7 @@ import { CalendarHeader } from '../organisms/CalendarHeader';
 import { CalendarWeekView } from '../organisms/CalendarWeekView';
 import { CalendarMonthView } from '../organisms/CalendarMonthView';
 import { HoursFormModal } from '../organisms/HoursFormModal';
+import { Tabs } from '../molecules/Tabs';
 import { Button } from '../atoms/Button';
 import { useCalendar } from '../../hooks/useCalendar';
 import { useHours } from '../../hooks/useHours';

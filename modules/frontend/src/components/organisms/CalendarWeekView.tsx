@@ -6,6 +6,7 @@ import { TimeSlot } from '../atoms/TimeSlot';
 interface CalendarWeekViewProps {
   currentDate: Date;
   events: CalendarEvent[];
+  selectedRoleId: string | null;
   onTimeSlotClick: (date: Date, hour: number, minute: number) => void;
   onEventClick: (event: CalendarEvent) => void;
   onEventDragStart: (event: CalendarEvent, e: React.DragEvent) => void;
@@ -17,6 +18,7 @@ const SLOTS_PER_HOUR = 2;
 export function CalendarWeekView({
   currentDate,
   events,
+  selectedRoleId,
   onTimeSlotClick,
   onEventClick,
   onEventDragStart,
@@ -92,6 +94,36 @@ export function CalendarWeekView({
     return events.filter((event) => isSameDay(event.date, date));
   };
 
+  const getBusinessHoursForSlot = (date: Date, slotIndex: number) => {
+    const hour = Math.floor(slotIndex / SLOTS_PER_HOUR);
+    const minute = (slotIndex % SLOTS_PER_HOUR) * 30;
+    const slotTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+    
+    return events.filter((event) => {
+      if (event.type !== 'business') return false;
+      if (!isSameDay(event.date, date)) return false;
+      if (selectedRoleId && event.role_id !== selectedRoleId) return false;
+      
+      const [startHour, startMinute] = event.start_time.split(':').map(Number);
+      const [endHour, endMinute] = event.end_time.split(':').map(Number);
+      
+      const eventStartMinutes = startHour * 60 + startMinute;
+      const eventEndMinutes = endHour * 60 + endMinute;
+      const slotMinutes = hour * 60 + minute;
+      
+      return slotMinutes >= eventStartMinutes && slotMinutes < eventEndMinutes;
+    });
+  };
+
+  const getAvailabilityEventsForDay = (date: Date) => {
+    return events.filter((event) => {
+      if (event.type !== 'availability') return false;
+      if (!isSameDay(event.date, date)) return false;
+      if (selectedRoleId && event.role_id !== selectedRoleId) return false;
+      return true;
+    });
+  };
+
   return (
     <div className="flex-1 overflow-auto bg-white">
       <div className="flex border-b border-gray-200">
@@ -119,25 +151,44 @@ export function CalendarWeekView({
               {Array.from({ length: 24 * SLOTS_PER_HOUR }).map((_, slotIndex) => {
                 const hour = Math.floor(slotIndex / SLOTS_PER_HOUR);
                 const minute = (slotIndex % SLOTS_PER_HOUR) * 30;
+                const businessHours = getBusinessHoursForSlot(day, slotIndex);
+                const hasBusinessHours = businessHours.length > 0;
+                
                 return (
                   <div
                     key={slotIndex}
-                    className="border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors"
+                    className={`border-b border-gray-100 cursor-pointer transition-colors ${
+                      hasBusinessHours
+                        ? 'bg-green-50 hover:bg-green-100'
+                        : 'hover:bg-blue-50'
+                    }`}
                     style={{ height: `${100 / (24 * SLOTS_PER_HOUR)}%` }}
                     onClick={() => onTimeSlotClick(day, hour, minute)}
                   />
                 );
               })}
 
-              {layoutEvents(getEventsForDay(day)).map(({ event, style }) => (
-                <EventBlock
-                  key={event.id}
-                  event={event}
-                  onClick={() => onEventClick(event)}
-                  onDragStart={(e) => onEventDragStart(event, e)}
-                  style={style}
-                />
-              ))}
+              {layoutEvents(getAvailabilityEventsForDay(day)).map(({ event, style }) => {
+                // Make availability events 5px smaller
+                const adjustedStyle = {
+                  ...style,
+                  top: `calc(${style.top} + 2.5px)`,
+                  left: `calc(${style.left} + 2.5px)`,
+                  width: `calc(${style.width} - 5px)`,
+                  height: `calc(${style.height} - 5px)`,
+                  zIndex: 10, // Ensure availability is on top
+                };
+                
+                return (
+                  <EventBlock
+                    key={event.id}
+                    event={event}
+                    onClick={() => onEventClick(event)}
+                    onDragStart={(e) => onEventDragStart(event, e)}
+                    style={adjustedStyle}
+                  />
+                );
+              })}
             </div>
           </div>
         ))}
