@@ -141,9 +141,6 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
         // Find the original availability hours
         const originalHours = availabilityHours.find(ah => ah.id === originalHoursId);
         if (!originalHours) {
-          console.error('Available hours IDs:', availabilityHours.map(ah => ah.id));
-          console.error('Looking for:', originalHoursId);
-          console.error('Event ID was:', eventId);
           throw new Error(`Original availability hours not found for ID: ${originalHoursId}`);
         }
 

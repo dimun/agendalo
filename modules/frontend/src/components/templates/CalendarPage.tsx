@@ -13,7 +13,7 @@ import type { BusinessServiceHoursCreate } from '../../types/businessHours';
 import { ApiGateway } from '../../gateways/apiGateway';
 import { LocalGateway } from '../../gateways/localGateway';
 
-const USE_LOCAL_GATEWAY = import.meta.env.VITE_USE_LOCAL_GATEWAY !== 'false';
+const USE_LOCAL_GATEWAY = import.meta.env.VITE_USE_LOCAL_GATEWAY !== 'false' && import.meta.env.VITE_USE_BACKEND_GATEWAY !== 'true';
 const gateway = USE_LOCAL_GATEWAY ? new LocalGateway() : new ApiGateway();
 
 export function CalendarPage() {
@@ -129,12 +129,6 @@ export function CalendarPage() {
         const isRecurring = event.is_recurring;
         const newSpecificDate = isRecurring ? getLocalDateString(date) : (event.specific_date ? getLocalDateString(date) : null);
         
-        console.log('handleEventDrop date conversion:', {
-          dateISO: date.toISOString(),
-          dateLocal: getLocalDateString(date),
-          newSpecificDate
-        });
-        
         // Create update data
         const updateData: AvailabilityHoursCreate = {
           role_id: event.role_id,
@@ -148,8 +142,6 @@ export function CalendarPage() {
         };
         
         await hours.updateAvailabilityHours(originalHoursId, updateData, event.person_id);
-      } else {
-        console.log('Business hours drag and drop not yet implemented');
       }
     } catch (err) {
       console.error('Failed to update event:', err);

@@ -202,16 +202,6 @@ export function CalendarWeekView({
       const normalizedDate = normalizeDate(date);
       // Store the date string in local timezone (YYYY-MM-DD)
       const dateString = getDateString(normalizedDate);
-      console.log('DragEnter (Highlight):', {
-        originalDate: date.toISOString(),
-        originalDateLocal: getDateString(date),
-        normalizedDate: normalizedDate.toISOString(),
-        normalizedDateLocal: getDateString(normalizedDate),
-        dateString,
-        hour,
-        minute,
-        dayParam: date.toString()
-      });
       setDragOverState({ 
         ...dragOverState, 
         date: normalizedDate, 
@@ -240,35 +230,12 @@ export function CalendarWeekView({
         // Create date using local timezone (year, month-1, day) - this creates midnight local time
         const dropDate = new Date(year, month - 1, day, 12, 0, 0); // Use noon to avoid timezone edge cases
         
-        console.log('Dropping with dragOverState:', {
-          dateString: dragOverState.dateString,
-          reconstructedDate: dropDate.toISOString(),
-          reconstructedDateLocal: getDateString(dropDate),
-          reconstructedDateLocalFull: `${dropDate.getFullYear()}-${String(dropDate.getMonth() + 1).padStart(2, '0')}-${String(dropDate.getDate()).padStart(2, '0')}`,
-          hour: dragOverState.hour,
-          minute: dragOverState.minute,
-          dayParam: date.toISOString(),
-          dayParamLocal: getDateString(date)
-        });
-        
         // Use the date from dragOverState which is already normalized to local midnight
-        // But ensure we're using the dateString to verify it matches
         const finalDate = normalizeDate(dropDate);
-        console.log('Final drop date:', {
-          finalDateISO: finalDate.toISOString(),
-          finalDateLocal: getDateString(finalDate),
-          matchesDateString: getDateString(finalDate) === dragOverState.dateString
-        });
-        
         onEventDrop(eventId, finalDate, dragOverState.hour, dragOverState.minute);
       } else {
         // Fallback to parameters if dragOverState is not available
         const normalizedDate = normalizeDate(date);
-        console.log('Dropping with fallback:', {
-          date: normalizedDate.toISOString(),
-          hour,
-          minute
-        });
         onEventDrop(eventId, normalizedDate, hour, minute);
       }
     }
@@ -394,18 +361,7 @@ export function CalendarWeekView({
                           // Compare using date strings to avoid timezone issues
                           const dayString = getDateString(day);
                           const isSameDate = dragOverState.dateString === dayString;
-                          const isHighlighted = isSameDate && dragOverState.hour === hour && dragOverState.minute === minute;
-                          if (isHighlighted) {
-                            console.log('Highlighting slot:', {
-                              dayString,
-                              dragOverStateDateString: dragOverState.dateString,
-                              hour,
-                              minute,
-                              dragOverStateHour: dragOverState.hour,
-                              dragOverStateMinute: dragOverState.minute
-                            });
-                          }
-                          return isHighlighted;
+                          return isSameDate && dragOverState.hour === hour && dragOverState.minute === minute;
                         })()
                           ? 'bg-blue-200 border-blue-400 border-2'
                           : ''
