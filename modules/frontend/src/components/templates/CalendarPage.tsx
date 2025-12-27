@@ -84,6 +84,19 @@ export function CalendarPage() {
     );
   }
 
+  // Ensure a role is always selected (obligatory)
+  const effectiveRoleId = hours.selectedRoleId || (hours.roles.length > 0 ? hours.roles[0].id : null);
+  
+  // Auto-select first role if none selected
+  if (!hours.selectedRoleId && hours.roles.length > 0) {
+    hours.setSelectedRoleId(hours.roles[0].id);
+  }
+
+  const roleTabs = hours.roles.map((role) => ({
+    id: role.id,
+    label: role.name,
+  }));
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <CalendarHeader
@@ -95,18 +108,30 @@ export function CalendarPage() {
         onToday={calendar.navigateToToday}
         roles={hours.roles}
         people={hours.people}
-        selectedRoleId={hours.selectedRoleId}
+        selectedRoleId={effectiveRoleId}
         selectedPersonId={hours.selectedPersonId}
         onRoleChange={hours.setSelectedRoleId}
         onPersonChange={hours.setSelectedPersonId}
         showPersonSelector={modalType === 'availability'}
       />
 
+      {hours.roles.length > 0 && (
+        <div className="bg-white border-b border-gray-200">
+          <Tabs
+            tabs={roleTabs}
+            activeTabId={effectiveRoleId}
+            onTabChange={(roleId) => hours.setSelectedRoleId(roleId)}
+            className="px-4"
+          />
+        </div>
+      )}
+
       <div className="flex-1 overflow-hidden flex flex-col">
         {calendar.view === 'week' ? (
           <CalendarWeekView
             currentDate={calendar.currentDate}
             events={hours.calendarEvents}
+            selectedRoleId={effectiveRoleId}
             onTimeSlotClick={handleTimeSlotClick}
             onEventClick={handleEventClick}
             onEventDragStart={handleEventDragStart}
