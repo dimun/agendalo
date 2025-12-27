@@ -12,7 +12,6 @@ interface CalendarWeekViewProps {
   onEventClick: (event: CalendarEvent) => void;
   onEventDragStart: (event: CalendarEvent, e: React.DragEvent) => void;
   onEventDrop?: (eventId: string, date: Date, hour: number, minute: number) => void;
-  onDragStartCapture?: (eventId: string, event: CalendarEvent) => void;
 }
 
 interface DragOverState {
@@ -35,7 +34,6 @@ export function CalendarWeekView({
   onEventClick,
   onEventDragStart,
   onEventDrop,
-  onDragStartCapture,
 }: CalendarWeekViewProps) {
   const [dragOverState, setDragOverState] = useState<DragOverState>({
     date: null,

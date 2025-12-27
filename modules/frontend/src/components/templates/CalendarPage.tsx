@@ -216,9 +216,6 @@ export function CalendarPage() {
             onEventClick={handleEventClick}
             onEventDragStart={handleEventDragStart}
             onEventDrop={handleEventDrop}
-            onDragStartCapture={(eventId, event) => {
-              // Store the event for drag preview
-            }}
           />
         ) : (
           <CalendarMonthView
