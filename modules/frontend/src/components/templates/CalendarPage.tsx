@@ -7,7 +7,9 @@ import { Tabs } from '../molecules/Tabs';
 import { Button } from '../atoms/Button';
 import { useCalendar } from '../../hooks/useCalendar';
 import { useHours } from '../../hooks/useHours';
-import type { CalendarEvent, AvailabilityHoursCreate, BusinessServiceHoursCreate } from '../../types/calendar';
+import type { CalendarEvent } from '../../types/calendar';
+import type { AvailabilityHoursCreate } from '../../types/availability';
+import type { BusinessServiceHoursCreate } from '../../types/businessHours';
 import { ApiGateway } from '../../gateways/apiGateway';
 import { LocalGateway } from '../../gateways/localGateway';
 
