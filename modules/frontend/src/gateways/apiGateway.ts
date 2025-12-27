@@ -19,7 +19,19 @@ export class ApiGateway implements IGateway {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    if (response.status === 204 || response.status === 201) {
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return undefined as T;
+      }
+    }
+
+    const text = await response.text();
+    if (!text) {
+      return undefined as T;
+    }
+
+    return JSON.parse(text);
   }
 
   async getPeople(): Promise<Person[]> {
