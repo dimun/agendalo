@@ -137,3 +137,16 @@ export const getAvailabilityEventsForDay = (
   });
 };
 
+export const getScheduleEventsForDay = (
+  events: CalendarEvent[],
+  date: Date,
+  selectedRoleId: string | null
+) => {
+  return events.filter((event) => {
+    if (event.type !== 'schedule') return false;
+    if (!isSameDay(event.date, date)) return false;
+    if (selectedRoleId && event.role_id !== selectedRoleId) return false;
+    return true;
+  });
+};
+

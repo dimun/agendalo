@@ -9,7 +9,9 @@ interface EventBlockProps {
 
 export function EventBlock({ event, onClick, onDragStart, style }: EventBlockProps) {
   const bgColor =
-    event.type === 'availability'
+    event.type === 'schedule'
+      ? 'bg-purple-100 border-purple-300 text-purple-900'
+      : event.type === 'availability'
       ? 'bg-blue-100 border-blue-300 text-blue-900'
       : 'bg-green-100 border-green-300 text-green-900';
 

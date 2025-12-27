@@ -15,7 +15,7 @@ export function agendaEntriesToCalendarEvents(
     
     return {
       id: entry.id,
-      type: 'availability',
+      type: 'schedule',
       person_id: entry.person_id,
       person_name: person?.name,
       role_id: entry.role_id,

@@ -1,6 +1,6 @@
 import type { CalendarEvent } from '../../../types/calendar';
 import { EventBlock } from '../EventBlock';
-import { SLOTS_PER_HOUR, TOTAL_SLOTS, getBusinessHoursBlocks, getAvailabilityEventsForDay, layoutEvents } from './utils';
+import { SLOTS_PER_HOUR, TOTAL_SLOTS, getBusinessHoursBlocks, getAvailabilityEventsForDay, getScheduleEventsForDay, layoutEvents } from './utils';
 import { BusinessHoursBlock } from './BusinessHoursBlock';
 import { TimeSlotCell } from './TimeSlotCell';
 import { DragPreview } from './DragPreview';
@@ -50,6 +50,7 @@ export function DayColumn({
 }: DayColumnProps) {
   const businessBlocks = getBusinessHoursBlocks(events, date, selectedRoleId);
   const availabilityEvents = getAvailabilityEventsForDay(events, date, selectedRoleId);
+  const scheduleEvents = getScheduleEventsForDay(events, date, selectedRoleId);
 
   return (
     <div className="flex-1 border-r border-gray-200 relative">
@@ -105,6 +106,26 @@ export function DayColumn({
                 onEventDragStart(event, e);
                 setDragOverState({ date: null, hour: null, minute: null, event: event, eventId: event.id });
               } : undefined}
+              style={adjustedStyle}
+            />
+          );
+        })}
+
+        {layoutEvents(scheduleEvents).map(({ event, style }) => {
+          const adjustedStyle = {
+            ...style,
+            top: `calc(${style.top} + 2.5px)`,
+            left: `calc(${style.left} + 2.5px)`,
+            width: `calc(${style.width} - 5px)`,
+            height: `calc(${style.height} - 5px)`,
+            zIndex: 15,
+          };
+
+          return (
+            <EventBlock
+              key={event.id}
+              event={event}
+              onClick={() => onEventClick(event)}
               style={adjustedStyle}
             />
           );

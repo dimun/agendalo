@@ -6,7 +6,7 @@ export type CalendarMode = 'planning' | 'schedule';
 
 export interface CalendarEvent {
   id: string;
-  type: 'availability' | 'business';
+  type: 'availability' | 'business' | 'schedule';
   person_id?: string;
   person_name?: string;
   role_id: string;
