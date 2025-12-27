@@ -73,6 +73,32 @@ export function CalendarPage() {
   const handleEventDragStart = (event: CalendarEvent, e: React.DragEvent) => {
     e.dataTransfer.setData('eventId', event.id);
     e.dataTransfer.setData('eventType', event.type);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleEventDrop = async (eventId: string, date: Date, hour: number, minute: number) => {
+    const event = hours.calendarEvents.find((e) => e.id === eventId);
+    if (!event) return;
+
+    const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+    const [originalStartHour, originalStartMinute] = event.start_time.split(':').map(Number);
+    const [originalEndHour, originalEndMinute] = event.end_time.split(':').map(Number);
+    
+    const originalDuration = (originalEndHour * 60 + originalEndMinute) - (originalStartHour * 60 + originalStartMinute);
+    const newEndMinutes = hour * 60 + minute + originalDuration;
+    const newEndHour = Math.floor(newEndMinutes / 60);
+    const newEndMinute = newEndMinutes % 60;
+    const endTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMinute).padStart(2, '0')}:00`;
+
+    if (event.type === 'availability') {
+      // For now, we'll need to update the availability hours
+      // This would require an update endpoint or recreating with new times
+      console.log('Drop availability event:', { eventId, date, startTime, endTime });
+      // TODO: Implement update availability hours
+    } else {
+      console.log('Drop business hours event:', { eventId, date, startTime, endTime });
+      // TODO: Implement update business service hours
+    }
   };
 
   if (hours.loading) {
@@ -133,6 +159,7 @@ export function CalendarPage() {
             onTimeSlotClick={handleTimeSlotClick}
             onEventClick={handleEventClick}
             onEventDragStart={handleEventDragStart}
+            onEventDrop={handleEventDrop}
           />
         ) : (
           <CalendarMonthView

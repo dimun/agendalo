@@ -10,6 +10,7 @@ interface CalendarWeekViewProps {
   onTimeSlotClick: (date: Date, hour: number, minute: number) => void;
   onEventClick: (event: CalendarEvent) => void;
   onEventDragStart: (event: CalendarEvent, e: React.DragEvent) => void;
+  onEventDrop?: (eventId: string, date: Date, hour: number, minute: number) => void;
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -22,6 +23,7 @@ export function CalendarWeekView({
   onTimeSlotClick,
   onEventClick,
   onEventDragStart,
+  onEventDrop,
 }: CalendarWeekViewProps) {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
@@ -203,6 +205,18 @@ export function CalendarWeekView({
                       }`}
                       style={{ height: `${100 / (24 * SLOTS_PER_HOUR)}%` }}
                       onClick={() => onTimeSlotClick(day, hour, minute)}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const eventId = e.dataTransfer.getData('eventId');
+                        if (eventId && onEventDrop) {
+                          onEventDrop(eventId, day, hour, minute);
+                        }
+                      }}
                     >
                       {hasBusinessHours && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
