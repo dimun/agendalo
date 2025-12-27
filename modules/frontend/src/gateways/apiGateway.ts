@@ -17,7 +17,21 @@ export class ApiGateway implements IGateway {
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      const text = await response.text();
+      let errorMessage = `API error: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = JSON.parse(text);
+        if (errorData.detail) {
+          errorMessage = typeof errorData.detail === 'string' 
+            ? errorData.detail 
+            : `API error: ${response.status} ${response.statusText}`;
+        }
+      } catch {
+        if (text) {
+          errorMessage = text;
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     if (response.status === 204) {
@@ -29,7 +43,7 @@ export class ApiGateway implements IGateway {
       return undefined as T;
     }
 
-    return JSON.parse(text);
+    return JSON.parse(text) as T;
   }
 
   async getPeople(): Promise<Person[]> {

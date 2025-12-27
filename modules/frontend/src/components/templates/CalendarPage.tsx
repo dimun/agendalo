@@ -224,11 +224,19 @@ export function CalendarPage() {
         optimization_strategy: 'balance_workload',
       };
 
-      await gateway.generateAgenda(request);
+      const generatedAgenda = await gateway.generateAgenda(request);
       agendas.refresh();
+      if (generatedAgenda) {
+        agendas.setSelectedAgendaId(generatedAgenda.id);
+      }
       setMode('schedule');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate agenda');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate agenda';
+      if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+        setError('Cannot generate agenda: Role not found or no availability/business service hours available. Please ensure you have added availability hours and business service hours for this role.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setGeneratingAgenda(false);
     }
