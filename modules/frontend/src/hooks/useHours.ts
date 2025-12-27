@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { IGateway } from '../gateways/interfaces';
 import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
 import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
-import type { CalendarEvent, Person, Role, HoursFilters } from '../types/calendar';
+import type { Person, Role, HoursFilters } from '../types/calendar';
 import { toCalendarEvents as availabilityToEvents } from '../adapters/availabilityAdapter';
 import { toCalendarEvents as businessToEvents } from '../adapters/businessHoursAdapter';
 
