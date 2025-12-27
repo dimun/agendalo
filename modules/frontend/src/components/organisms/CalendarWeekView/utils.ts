@@ -142,9 +142,11 @@ export const getScheduleEventsForDay = (
   date: Date,
   selectedRoleId: string | null
 ) => {
+  const normalizedDate = normalizeDate(date);
   return events.filter((event) => {
     if (event.type !== 'schedule') return false;
-    if (!isSameDay(event.date, date)) return false;
+    const normalizedEventDate = normalizeDate(event.date);
+    if (!isSameDay(normalizedEventDate, normalizedDate)) return false;
     if (selectedRoleId && event.role_id !== selectedRoleId) return false;
     return true;
   });
