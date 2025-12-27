@@ -29,7 +29,10 @@ export function expandBusinessServiceHours(
     }
   } else if (hours.is_recurring && hours.day_of_week !== null) {
     dateRange.forEach((date) => {
-      if (date.getDay() === hours.day_of_week) {
+      // Convert JavaScript getDay() (0=Sunday) to Python weekday() (0=Monday)
+      const jsDay = date.getDay();
+      const pythonWeekday = jsDay === 0 ? 6 : jsDay - 1;
+      if (pythonWeekday === hours.day_of_week) {
         const start = hours.start_date ? parseISO(hours.start_date) : null;
         const end = hours.end_date ? parseISO(hours.end_date) : null;
 
