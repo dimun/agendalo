@@ -24,21 +24,67 @@ export function CalendarWeekView({
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
 
-  const getEventPosition = (event: CalendarEvent) => {
+  const getEventSlotRange = (event: CalendarEvent) => {
     const [startHour, startMinute] = event.start_time.split(':').map(Number);
     const [endHour, endMinute] = event.end_time.split(':').map(Number);
     
     const startSlot = startHour * SLOTS_PER_HOUR + (startMinute >= 30 ? 1 : 0);
     const endSlot = endHour * SLOTS_PER_HOUR + (endMinute > 30 ? 1 : 0);
-    const duration = endSlot - startSlot;
     
-    const topPercent = (startSlot / (24 * SLOTS_PER_HOUR)) * 100;
-    const heightPercent = (duration / (24 * SLOTS_PER_HOUR)) * 100;
+    return { startSlot, endSlot };
+  };
+
+  const eventsOverlap = (event1: CalendarEvent, event2: CalendarEvent) => {
+    const range1 = getEventSlotRange(event1);
+    const range2 = getEventSlotRange(event2);
     
-    return {
-      top: `${topPercent}%`,
-      height: `${heightPercent}%`,
-    };
+    return !(range1.endSlot <= range2.startSlot || range2.endSlot <= range1.startSlot);
+  };
+
+  const layoutEvents = (dayEvents: CalendarEvent[]) => {
+    // Group overlapping events into columns
+    const columns: CalendarEvent[][] = [];
+    
+    dayEvents.forEach((event) => {
+      let placed = false;
+      
+      // Try to place event in existing column
+      for (const column of columns) {
+        const overlaps = column.some((e) => eventsOverlap(e, event));
+        if (!overlaps) {
+          column.push(event);
+          placed = true;
+          break;
+        }
+      }
+      
+      // If no column available, create new one
+      if (!placed) {
+        columns.push([event]);
+      }
+    });
+    
+    // Assign position to each event
+    return dayEvents.map((event) => {
+      const columnIndex = columns.findIndex((col) => col.includes(event));
+      const columnWidth = 100 / columns.length;
+      const left = columnIndex * columnWidth;
+      
+      const { startSlot, endSlot } = getEventSlotRange(event);
+      const topPercent = (startSlot / (24 * SLOTS_PER_HOUR)) * 100;
+      const heightPercent = ((endSlot - startSlot) / (24 * SLOTS_PER_HOUR)) * 100;
+      
+      return {
+        event,
+        style: {
+          top: `${topPercent}%`,
+          left: `${left}%`,
+          width: `${columnWidth}%`,
+          height: `${heightPercent}%`,
+          minHeight: '20px',
+        },
+      };
+    });
   };
 
   const getEventsForDay = (date: Date) => {
@@ -82,21 +128,15 @@ export function CalendarWeekView({
                 );
               })}
 
-              {getEventsForDay(day).map((event) => {
-                const position = getEventPosition(event);
-                return (
-                  <EventBlock
-                    key={event.id}
-                    event={event}
-                    onClick={() => onEventClick(event)}
-                    onDragStart={(e) => onEventDragStart(event, e)}
-                    style={{
-                      ...position,
-                      minHeight: '20px',
-                    }}
-                  />
-                );
-              })}
+              {layoutEvents(getEventsForDay(day)).map(({ event, style }) => (
+                <EventBlock
+                  key={event.id}
+                  event={event}
+                  onClick={() => onEventClick(event)}
+                  onDragStart={(e) => onEventDragStart(event, e)}
+                  style={style}
+                />
+              ))}
             </div>
           </div>
         ))}

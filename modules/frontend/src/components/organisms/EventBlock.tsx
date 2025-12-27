@@ -18,7 +18,7 @@ export function EventBlock({ event, onClick, onDragStart, style }: EventBlockPro
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
-      className={`absolute left-0 right-0 px-2 py-1 text-xs rounded border cursor-move hover:opacity-80 transition-opacity ${bgColor}`}
+      className={`absolute px-2 py-1 text-xs rounded border cursor-move hover:opacity-80 transition-opacity ${bgColor}`}
       style={style}
     >
       <div className="font-medium truncate">
