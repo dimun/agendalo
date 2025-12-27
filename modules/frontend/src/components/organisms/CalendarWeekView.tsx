@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { CalendarEvent } from '../../types/calendar';
 import { format, isSameDay, startOfWeek, eachDayOfInterval, addDays } from 'date-fns';
 import { EventBlock } from './EventBlock';
@@ -13,6 +14,13 @@ interface CalendarWeekViewProps {
   onEventDrop?: (eventId: string, date: Date, hour: number, minute: number) => void;
 }
 
+interface DragOverState {
+  date: Date | null;
+  hour: number | null;
+  minute: number | null;
+  event: CalendarEvent | null;
+}
+
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const SLOTS_PER_HOUR = 2;
 
@@ -25,6 +33,13 @@ export function CalendarWeekView({
   onEventDragStart,
   onEventDrop,
 }: CalendarWeekViewProps) {
+  const [dragOverState, setDragOverState] = useState<DragOverState>({
+    date: null,
+    hour: null,
+    minute: null,
+    event: null,
+  });
+
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
 
@@ -162,6 +177,57 @@ export function CalendarWeekView({
     });
   };
 
+  const handleDragEnter = (date: Date, hour: number, minute: number, event: CalendarEvent | null) => {
+    setDragOverState({ date, hour, minute, event });
+  };
+
+  const handleDragLeave = () => {
+    setDragOverState({ date: null, hour: null, minute: null, event: null });
+  };
+
+  const handleDrop = (e: React.DragEvent, date: Date, hour: number, minute: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const eventId = e.dataTransfer.getData('eventId');
+    if (eventId && onEventDrop) {
+      onEventDrop(eventId, date, hour, minute);
+    }
+    setDragOverState({ date: null, hour: null, minute: null, event: null });
+  };
+
+  const getPreviewEvent = (date: Date, hour: number, minute: number, originalEvent: CalendarEvent | null) => {
+    if (!originalEvent || !isSameDay(dragOverState.date || new Date(), date) || 
+        dragOverState.hour !== hour || dragOverState.minute !== minute) {
+      return null;
+    }
+
+    const [originalStartHour, originalStartMinute] = originalEvent.start_time.split(':').map(Number);
+    const [originalEndHour, originalEndMinute] = originalEvent.end_time.split(':').map(Number);
+    const originalDuration = (originalEndHour * 60 + originalEndMinute) - (originalStartHour * 60 + originalStartMinute);
+    const newEndMinutes = hour * 60 + minute + originalDuration;
+    const newEndHour = Math.floor(newEndMinutes / 60);
+    const newEndMinute = newEndMinutes % 60;
+
+    const startSlot = hour * SLOTS_PER_HOUR + (minute >= 30 ? 1 : 0);
+    const endSlot = newEndHour * SLOTS_PER_HOUR + (newEndMinute > 30 ? 1 : 0);
+    const topPercent = (startSlot / (24 * SLOTS_PER_HOUR)) * 100;
+    const heightPercent = ((endSlot - startSlot) / (24 * SLOTS_PER_HOUR)) * 100;
+
+    return {
+      event: originalEvent,
+      style: {
+        top: `${topPercent}%`,
+        left: '2.5px',
+        width: 'calc(100% - 5px)',
+        height: `${heightPercent}%`,
+        minHeight: '20px',
+        opacity: 0.6,
+        border: '2px dashed #3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      },
+    };
+  };
+
   return (
     <div className="flex-1 overflow-auto bg-white">
       <div className="flex border-b border-gray-200">
@@ -198,26 +264,41 @@ export function CalendarWeekView({
                   return (
                     <div
                       key={slotIndex}
-                      className={`border-b cursor-pointer transition-colors relative ${
-                        hasBusinessHours
-                          ? 'bg-green-50 hover:bg-green-100'
-                          : 'border-gray-100 hover:bg-blue-50'
-                      }`}
                       style={{ height: `${100 / (24 * SLOTS_PER_HOUR)}%` }}
                       onClick={() => onTimeSlotClick(day, hour, minute)}
                       onDragOver={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         e.dataTransfer.dropEffect = 'move';
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                        
+                        // Get the dragged event from dataTransfer
                         const eventId = e.dataTransfer.getData('eventId');
-                        if (eventId && onEventDrop) {
-                          onEventDrop(eventId, day, hour, minute);
+                        const draggedEvent = eventId ? events.find(ev => ev.id === eventId) : null;
+                        
+                        if (draggedEvent) {
+                          handleDragEnter(day, hour, minute, draggedEvent);
                         }
                       }}
+                      onDragLeave={(e) => {
+                        // Only clear if we're leaving the time slot (not entering a child)
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                        const x = e.clientX;
+                        const y = e.clientY;
+                        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+                          handleDragLeave();
+                        }
+                      }}
+                      onDrop={(e) => handleDrop(e, day, hour, minute)}
+                      className={`border-b cursor-pointer transition-colors relative ${
+                        hasBusinessHours
+                          ? 'bg-green-50 hover:bg-green-100'
+                          : 'border-gray-100 hover:bg-blue-50'
+                      } ${
+                        dragOverState.date && isSameDay(dragOverState.date, day) && 
+                        dragOverState.hour === hour && dragOverState.minute === minute
+                          ? 'bg-blue-200 border-blue-400 border-2'
+                          : ''
+                      }`}
                     >
                       {hasBusinessHours && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -252,27 +333,51 @@ export function CalendarWeekView({
                   );
                 })}
 
-              {layoutEvents(getAvailabilityEventsForDay(day)).map(({ event, style }) => {
-                // Make availability events 5px smaller
-                const adjustedStyle = {
-                  ...style,
-                  top: `calc(${style.top} + 2.5px)`,
-                  left: `calc(${style.left} + 2.5px)`,
-                  width: `calc(${style.width} - 5px)`,
-                  height: `calc(${style.height} - 5px)`,
-                  zIndex: 10, // Ensure availability is on top
-                };
-                
-                return (
-                  <EventBlock
-                    key={event.id}
-                    event={event}
-                    onClick={() => onEventClick(event)}
-                    onDragStart={(e) => onEventDragStart(event, e)}
-                    style={adjustedStyle}
-                  />
-                );
-              })}
+                       {layoutEvents(getAvailabilityEventsForDay(day)).map(({ event, style }) => {
+                         // Make availability events 5px smaller
+                         const adjustedStyle = {
+                           ...style,
+                           top: `calc(${style.top} + 2.5px)`,
+                           left: `calc(${style.left} + 2.5px)`,
+                           width: `calc(${style.width} - 5px)`,
+                           height: `calc(${style.height} - 5px)`,
+                           zIndex: 10, // Ensure availability is on top
+                         };
+                         
+                         return (
+                           <EventBlock
+                             key={event.id}
+                             event={event}
+                             onClick={() => onEventClick(event)}
+                             onDragStart={(e) => {
+                               onEventDragStart(event, e);
+                               setDragOverState({ date: null, hour: null, minute: null, event: null });
+                             }}
+                             style={adjustedStyle}
+                           />
+                         );
+                       })}
+
+                       {/* Preview of dragged event */}
+                       {(() => {
+                         const preview = getPreviewEvent(day, hour, minute, dragOverState.event);
+                         if (!preview) return null;
+                         return (
+                           <div
+                             className="absolute px-2 py-1 text-xs rounded border pointer-events-none"
+                             style={preview.style}
+                           >
+                             <div className="font-medium truncate">
+                               {preview.event.type === 'availability' && preview.event.person_name
+                                 ? preview.event.person_name
+                                 : preview.event.role_name}
+                             </div>
+                             <div className="text-xs opacity-75">
+                               {String(hour).padStart(2, '0')}:{String(minute).padStart(2, '0')} - {String(Math.floor((hour * 60 + minute + ((parseInt(preview.event.end_time.split(':')[0]) * 60 + parseInt(preview.event.end_time.split(':')[1])) - (parseInt(preview.event.start_time.split(':')[0]) * 60 + parseInt(preview.event.start_time.split(':')[1])))) / 60)).padStart(2, '0')}:{String(((hour * 60 + minute + ((parseInt(preview.event.end_time.split(':')[0]) * 60 + parseInt(preview.event.end_time.split(':')[1])) - (parseInt(preview.event.start_time.split(':')[0]) * 60 + parseInt(preview.event.start_time.split(':')[1])))) % 60)).padStart(2, '0')}
+                             </div>
+                           </div>
+                         );
+                       })()}
               </div>
             </div>
           );
