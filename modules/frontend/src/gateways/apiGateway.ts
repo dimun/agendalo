@@ -1,0 +1,96 @@
+import { IGateway } from './interfaces';
+import { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
+import { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import { Person, Role, HoursFilters } from '../types/calendar';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+
+export class ApiGateway implements IGateway {
+  private async fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async getPeople(): Promise<Person[]> {
+    return this.fetchJson<Person[]>(`${API_BASE_URL}/people`);
+  }
+
+  async getRoles(): Promise<Role[]> {
+    return this.fetchJson<Role[]>(`${API_BASE_URL}/roles`);
+  }
+
+  async getAvailabilityHours(filters: HoursFilters): Promise<AvailabilityHours[]> {
+    const params = new URLSearchParams();
+    if (filters.role_id) {
+      params.append('role_id', filters.role_id);
+    }
+    if (filters.start_date && filters.end_date) {
+      params.append('start_date', filters.start_date.toISOString().split('T')[0]);
+      params.append('end_date', filters.end_date.toISOString().split('T')[0]);
+    }
+
+    if (filters.person_id) {
+      return this.fetchJson<AvailabilityHours[]>(
+        `${API_BASE_URL}/people/${filters.person_id}/availability-hours`
+      );
+    }
+
+    if (params.toString()) {
+      return this.fetchJson<AvailabilityHours[]>(`${API_BASE_URL}/availability-hours?${params}`);
+    }
+
+    throw new Error('Either role_id or both start_date and end_date must be provided');
+  }
+
+  async createAvailabilityHours(
+    personId: string,
+    data: AvailabilityHoursCreate
+  ): Promise<AvailabilityHours> {
+    return this.fetchJson<AvailabilityHours>(
+      `${API_BASE_URL}/people/${personId}/availability-hours`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getBusinessServiceHours(filters: HoursFilters): Promise<BusinessServiceHours[]> {
+    const params = new URLSearchParams();
+    if (filters.role_id) {
+      params.append('role_id', filters.role_id);
+    }
+    if (filters.start_date && filters.end_date) {
+      params.append('start_date', filters.start_date.toISOString().split('T')[0]);
+      params.append('end_date', filters.end_date.toISOString().split('T')[0]);
+    }
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `${API_BASE_URL}/business-service-hours?${queryString}`
+      : `${API_BASE_URL}/business-service-hours`;
+
+    return this.fetchJson<BusinessServiceHours[]>(url);
+  }
+
+  async createBusinessServiceHours(
+    data: BusinessServiceHoursCreate
+  ): Promise<BusinessServiceHours> {
+    return this.fetchJson<BusinessServiceHours>(`${API_BASE_URL}/business-service-hours`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+}
+
