@@ -46,7 +46,9 @@ export function CalendarWeekView({
   });
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
+  const daysRaw = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
+  // Normalize all days to midnight to avoid timezone issues
+  const days = daysRaw.map(day => normalizeDate(day));
 
   const getEventSlotRange = (event: CalendarEvent) => {
     const [startHour, startMinute] = event.start_time.split(':').map(Number);
