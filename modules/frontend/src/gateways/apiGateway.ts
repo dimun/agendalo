@@ -1,6 +1,6 @@
 import type { IGateway } from './interfaces';
 import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
-import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import type { BusinessServiceHours, BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../types/businessHours';
 import type { Person, Role, HoursFilters } from '../types/calendar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
@@ -88,6 +88,15 @@ export class ApiGateway implements IGateway {
     data: BusinessServiceHoursCreate
   ): Promise<BusinessServiceHours> {
     return this.fetchJson<BusinessServiceHours>(`${API_BASE_URL}/business-service-hours`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createBusinessServiceHoursBulk(
+    data: BusinessServiceHoursBulkCreate
+  ): Promise<BusinessServiceHours[]> {
+    return this.fetchJson<BusinessServiceHours[]>(`${API_BASE_URL}/business-service-hours/bulk`, {
       method: 'POST',
       body: JSON.stringify(data),
     });

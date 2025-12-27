@@ -21,3 +21,12 @@ export interface BusinessServiceHoursCreate {
   specific_date: string | null;
 }
 
+export interface BusinessServiceHoursBulkCreate {
+  role_id: string;
+  start_time: string;
+  end_time: string;
+  start_date: string | null;
+  end_date: string | null;
+  days: string;
+}
+

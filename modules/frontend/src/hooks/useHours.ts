@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { IGateway } from '../gateways/interfaces';
 import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
-import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import type { BusinessServiceHours, BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../types/businessHours';
 import type { Person, Role, HoursFilters } from '../types/calendar';
 import { toCalendarEvents as availabilityToEvents } from '../adapters/availabilityAdapter';
 import { toCalendarEvents as businessToEvents } from '../adapters/businessHoursAdapter';
@@ -125,6 +125,21 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
     [gateway, loadBusinessServiceHours]
   );
 
+  const createBusinessServiceHoursBulk = useCallback(
+    async (data: BusinessServiceHoursBulkCreate) => {
+      try {
+        const newHoursList = await gateway.createBusinessServiceHoursBulk(data);
+        setBusinessServiceHours((prev) => [...prev, ...newHoursList]);
+        await loadBusinessServiceHours();
+        return newHoursList;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create business service hours');
+        throw err;
+      }
+    },
+    [gateway, loadBusinessServiceHours]
+  );
+
   const updateAvailabilityHours = useCallback(
     async (eventId: string, data: AvailabilityHoursCreate, personId?: string) => {
       try {
@@ -183,6 +198,7 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
     setSelectedPersonId,
     createAvailabilityHours,
     createBusinessServiceHours,
+    createBusinessServiceHoursBulk,
     updateAvailabilityHours,
     refresh: () => {
       loadAvailabilityHours();

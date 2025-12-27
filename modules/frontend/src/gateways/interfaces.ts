@@ -1,5 +1,5 @@
 import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
-import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import type { BusinessServiceHours, BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../types/businessHours';
 import type { Person, Role, HoursFilters } from '../types/calendar';
 
 export interface IGateway {
@@ -10,5 +10,6 @@ export interface IGateway {
   updateAvailabilityHours?(id: string, data: AvailabilityHours): Promise<AvailabilityHours>;
   getBusinessServiceHours(filters: HoursFilters): Promise<BusinessServiceHours[]>;
   createBusinessServiceHours(data: BusinessServiceHoursCreate): Promise<BusinessServiceHours>;
+  createBusinessServiceHoursBulk(data: BusinessServiceHoursBulkCreate): Promise<BusinessServiceHours[]>;
 }
 

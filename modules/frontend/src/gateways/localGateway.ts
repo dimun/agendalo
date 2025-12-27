@@ -1,6 +1,6 @@
 import type { IGateway } from './interfaces';
 import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
-import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import type { BusinessServiceHours, BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../types/businessHours';
 import type { Person, Role, HoursFilters } from '../types/calendar';
 
 const mockPeople: Person[] = [
@@ -115,6 +115,37 @@ export class LocalGateway implements IGateway {
     }
     mockAvailabilityHours[index] = data;
     return Promise.resolve(data);
+  }
+
+  async createBusinessServiceHoursBulk(
+    data: BusinessServiceHoursBulkCreate
+  ): Promise<BusinessServiceHours[]> {
+    const dayMap: Record<string, number[]> = {
+      'mon-fri': [0, 1, 2, 3, 4],
+      'mon-sat': [0, 1, 2, 3, 4, 5],
+      'all': [0, 1, 2, 3, 4, 5, 6],
+    };
+
+    const days = dayMap[data.days.toLowerCase()] || [];
+    const created: BusinessServiceHours[] = [];
+
+    days.forEach((dayOfWeek) => {
+      const newHours: BusinessServiceHours = {
+        id: `bsh-${Date.now()}-${dayOfWeek}`,
+        role_id: data.role_id,
+        day_of_week: dayOfWeek,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        is_recurring: true,
+        specific_date: null,
+      };
+      mockBusinessServiceHours.push(newHours);
+      created.push(newHours);
+    });
+
+    return Promise.resolve(created);
   }
 }
 

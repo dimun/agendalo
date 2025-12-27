@@ -3,13 +3,14 @@ import { CalendarHeader } from '../organisms/CalendarHeader';
 import { CalendarWeekView } from '../organisms/CalendarWeekView';
 import { CalendarMonthView } from '../organisms/CalendarMonthView';
 import { HoursFormModal } from '../organisms/HoursFormModal';
+import { BusinessHoursBulkFormModal } from '../organisms/BusinessHoursBulkFormModal';
 import { Tabs } from '../molecules/Tabs';
 import { Button } from '../atoms/Button';
 import { useCalendar } from '../../hooks/useCalendar';
 import { useHours } from '../../hooks/useHours';
 import type { CalendarEvent } from '../../types/calendar';
 import type { AvailabilityHoursCreate } from '../../types/availability';
-import type { BusinessServiceHoursCreate } from '../../types/businessHours';
+import type { BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../../types/businessHours';
 import { ApiGateway } from '../../gateways/apiGateway';
 import { LocalGateway } from '../../gateways/localGateway';
 
@@ -18,6 +19,7 @@ const gateway = USE_LOCAL_GATEWAY ? new LocalGateway() : new ApiGateway();
 
 export function CalendarPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'availability' | 'business'>('availability');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [clickedDate, setClickedDate] = useState<Date | undefined>();
@@ -59,6 +61,18 @@ export function CalendarPage() {
   const handleAddBusinessHours = () => {
     setModalType('business');
     setModalOpen(true);
+  };
+
+  const handleAddBusinessHoursBulk = () => {
+    setBulkModalOpen(true);
+  };
+
+  const handleBulkSubmit = async (data: BusinessServiceHoursBulkCreate) => {
+    if (!hours.selectedRoleId) {
+      throw new Error('A role must be selected.');
+    }
+    await hours.createBusinessServiceHoursBulk({ ...data, role_id: hours.selectedRoleId });
+    hours.refresh();
   };
 
   const handleSubmit = async (data: AvailabilityHoursCreate | BusinessServiceHoursCreate, personId?: string, eventId?: string) => {
@@ -226,6 +240,9 @@ export function CalendarPage() {
         <Button variant="secondary" onClick={handleAddBusinessHours}>
           Add Business Hours
         </Button>
+        <Button variant="secondary" onClick={handleAddBusinessHoursBulk}>
+          Add Business Hours (Bulk)
+        </Button>
       </div>
 
       <HoursFormModal
@@ -243,6 +260,15 @@ export function CalendarPage() {
         initialDate={clickedDate}
         initialTime={clickedTime}
         initialEvent={selectedEvent}
+      />
+
+      <BusinessHoursBulkFormModal
+        isOpen={bulkModalOpen}
+        onClose={() => {
+          setBulkModalOpen(false);
+        }}
+        onSubmit={handleBulkSubmit}
+        roles={hours.roles}
       />
     </div>
   );
