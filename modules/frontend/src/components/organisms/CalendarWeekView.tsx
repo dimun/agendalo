@@ -214,12 +214,27 @@ export function CalendarWeekView({
     e.stopPropagation();
     const eventId = e.dataTransfer.getData('eventId') || dragOverState.eventId;
     if (eventId && onEventDrop) {
-      // Use the date from dragOverState if available, as it's the normalized date we've been tracking
-      // Otherwise fall back to the date parameter (normalized)
-      const dropDate = dragOverState.date || normalizeDate(date);
-      const dropHour = dragOverState.hour !== null ? dragOverState.hour : hour;
-      const dropMinute = dragOverState.minute !== null ? dragOverState.minute : minute;
-      onEventDrop(eventId, dropDate, dropHour, dropMinute);
+      // Always use dragOverState values if available - these are what the preview is showing
+      if (dragOverState.date && dragOverState.hour !== null && dragOverState.minute !== null) {
+        console.log('Dropping with dragOverState:', {
+          date: dragOverState.date.toISOString(),
+          dateString: dragOverState.dateString,
+          hour: dragOverState.hour,
+          minute: dragOverState.minute,
+          dayParam: date.toISOString(),
+          dayParamNormalized: normalizeDate(date).toISOString()
+        });
+        onEventDrop(eventId, dragOverState.date, dragOverState.hour, dragOverState.minute);
+      } else {
+        // Fallback to parameters if dragOverState is not available
+        const normalizedDate = normalizeDate(date);
+        console.log('Dropping with fallback:', {
+          date: normalizedDate.toISOString(),
+          hour,
+          minute
+        });
+        onEventDrop(eventId, normalizedDate, hour, minute);
+      }
     }
     setDragOverState({ date: null, hour: null, minute: null, event: null, eventId: null, dateString: undefined });
   };
