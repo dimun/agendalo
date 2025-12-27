@@ -195,26 +195,30 @@ export function CalendarWeekView({
     setDragOverState({ date: null, hour: null, minute: null, event: null });
   };
 
-  const getPreviewEvent = (date: Date, hour: number, minute: number, originalEvent: CalendarEvent | null) => {
-    if (!originalEvent || !isSameDay(dragOverState.date || new Date(), date) || 
-        dragOverState.hour !== hour || dragOverState.minute !== minute) {
+  const getPreviewEvent = (date: Date, slotHour: number, slotMinute: number) => {
+    if (!dragOverState.event || !dragOverState.date || 
+        !isSameDay(dragOverState.date, date) || 
+        dragOverState.hour !== slotHour || dragOverState.minute !== slotMinute) {
       return null;
     }
 
+    const originalEvent = dragOverState.event;
     const [originalStartHour, originalStartMinute] = originalEvent.start_time.split(':').map(Number);
     const [originalEndHour, originalEndMinute] = originalEvent.end_time.split(':').map(Number);
     const originalDuration = (originalEndHour * 60 + originalEndMinute) - (originalStartHour * 60 + originalStartMinute);
-    const newEndMinutes = hour * 60 + minute + originalDuration;
+    const newEndMinutes = slotHour * 60 + slotMinute + originalDuration;
     const newEndHour = Math.floor(newEndMinutes / 60);
     const newEndMinute = newEndMinutes % 60;
 
-    const startSlot = hour * SLOTS_PER_HOUR + (minute >= 30 ? 1 : 0);
+    const startSlot = slotHour * SLOTS_PER_HOUR + (slotMinute >= 30 ? 1 : 0);
     const endSlot = newEndHour * SLOTS_PER_HOUR + (newEndMinute > 30 ? 1 : 0);
     const topPercent = (startSlot / (24 * SLOTS_PER_HOUR)) * 100;
     const heightPercent = ((endSlot - startSlot) / (24 * SLOTS_PER_HOUR)) * 100;
 
     return {
       event: originalEvent,
+      startTime: `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`,
+      endTime: `${String(newEndHour).padStart(2, '0')}:${String(newEndMinute).padStart(2, '0')}`,
       style: {
         top: `${topPercent}%`,
         left: '2.5px',
