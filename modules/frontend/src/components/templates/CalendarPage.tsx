@@ -32,7 +32,7 @@ export function CalendarPage() {
     if (!hours.selectedRoleId && hours.roles.length > 0) {
       hours.setSelectedRoleId(hours.roles[0].id);
     }
-  }, [hours.roles.length, hours.selectedRoleId, hours.setSelectedRoleId]);
+  }, [hours.roles, hours.selectedRoleId, hours.setSelectedRoleId]);
 
   const handleTimeSlotClick = (date: Date, hour: number, minute: number) => {
     const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
