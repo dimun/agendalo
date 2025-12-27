@@ -195,29 +195,32 @@ export function CalendarWeekView({
     setDragOverState({ date: null, hour: null, minute: null, event: null });
   };
 
-  const getPreviewEvent = (date: Date, slotHour: number, slotMinute: number) => {
+  const getPreviewEvent = (date: Date) => {
     if (!dragOverState.event || !dragOverState.date || 
         !isSameDay(dragOverState.date, date) || 
-        dragOverState.hour !== slotHour || dragOverState.minute !== slotMinute) {
+        dragOverState.hour === null || dragOverState.minute === null) {
       return null;
     }
 
     const originalEvent = dragOverState.event;
+    const previewHour = dragOverState.hour;
+    const previewMinute = dragOverState.minute;
+    
     const [originalStartHour, originalStartMinute] = originalEvent.start_time.split(':').map(Number);
     const [originalEndHour, originalEndMinute] = originalEvent.end_time.split(':').map(Number);
     const originalDuration = (originalEndHour * 60 + originalEndMinute) - (originalStartHour * 60 + originalStartMinute);
-    const newEndMinutes = slotHour * 60 + slotMinute + originalDuration;
+    const newEndMinutes = previewHour * 60 + previewMinute + originalDuration;
     const newEndHour = Math.floor(newEndMinutes / 60);
     const newEndMinute = newEndMinutes % 60;
 
-    const startSlot = slotHour * SLOTS_PER_HOUR + (slotMinute >= 30 ? 1 : 0);
+    const startSlot = previewHour * SLOTS_PER_HOUR + (previewMinute >= 30 ? 1 : 0);
     const endSlot = newEndHour * SLOTS_PER_HOUR + (newEndMinute > 30 ? 1 : 0);
     const topPercent = (startSlot / (24 * SLOTS_PER_HOUR)) * 100;
     const heightPercent = ((endSlot - startSlot) / (24 * SLOTS_PER_HOUR)) * 100;
 
     return {
       event: originalEvent,
-      startTime: `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`,
+      startTime: `${String(previewHour).padStart(2, '0')}:${String(previewMinute).padStart(2, '0')}`,
       endTime: `${String(newEndHour).padStart(2, '0')}:${String(newEndMinute).padStart(2, '0')}`,
       style: {
         top: `${topPercent}%`,
@@ -228,6 +231,7 @@ export function CalendarWeekView({
         opacity: 0.6,
         border: '2px dashed #3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        zIndex: 20,
       },
     };
   };
@@ -362,26 +366,26 @@ export function CalendarWeekView({
                          );
                        })}
 
-                       {/* Preview of dragged event */}
-                       {(() => {
-                         const preview = getPreviewEvent(day, hour, minute);
-                         if (!preview) return null;
-                         return (
-                           <div
-                             className="absolute px-2 py-1 text-xs rounded border pointer-events-none"
-                             style={preview.style}
-                           >
-                             <div className="font-medium truncate">
-                               {preview.event.type === 'availability' && preview.event.person_name
-                                 ? preview.event.person_name
-                                 : preview.event.role_name}
-                             </div>
-                             <div className="text-xs opacity-75">
-                               {preview.startTime} - {preview.endTime}
-                             </div>
-                           </div>
-                         );
-                       })()}
+                {/* Preview of dragged event */}
+                {(() => {
+                  const preview = getPreviewEvent(day);
+                  if (!preview) return null;
+                  return (
+                    <div
+                      className="absolute px-2 py-1 text-xs rounded border pointer-events-none"
+                      style={preview.style}
+                    >
+                      <div className="font-medium truncate">
+                        {preview.event.type === 'availability' && preview.event.person_name
+                          ? preview.event.person_name
+                          : preview.event.role_name}
+                      </div>
+                      <div className="text-xs opacity-75">
+                        {preview.startTime} - {preview.endTime}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           );
