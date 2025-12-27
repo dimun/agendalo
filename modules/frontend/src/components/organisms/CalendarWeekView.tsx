@@ -202,8 +202,18 @@ export function CalendarWeekView({
     if (dragOverState.eventId) {
       const event = events.find(ev => ev.id === dragOverState.eventId);
       const normalizedDate = normalizeDate(date);
-      // Store the date string for easier debugging and comparison
-      const dateString = normalizedDate.toISOString().split('T')[0];
+      // Store the date string in local timezone (YYYY-MM-DD)
+      const dateString = getDateString(normalizedDate);
+      console.log('DragEnter (Highlight):', {
+        originalDate: date.toISOString(),
+        originalDateLocal: getDateString(date),
+        normalizedDate: normalizedDate.toISOString(),
+        normalizedDateLocal: getDateString(normalizedDate),
+        dateString,
+        hour,
+        minute,
+        dayParam: date.toString()
+      });
       setDragOverState({ 
         ...dragOverState, 
         date: normalizedDate, 
