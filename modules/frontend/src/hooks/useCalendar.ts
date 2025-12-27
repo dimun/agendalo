@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { CalendarView } from '../types/calendar';
+import type { CalendarView } from '../types/calendar';
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, format } from 'date-fns';
 
 export function useCalendar() {
