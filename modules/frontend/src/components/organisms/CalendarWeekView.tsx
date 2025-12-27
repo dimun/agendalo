@@ -10,9 +10,9 @@ interface CalendarWeekViewProps {
   currentDate: Date;
   events: CalendarEvent[];
   selectedRoleId: string | null;
-  onTimeSlotClick: (date: Date, hour: number, minute: number) => void;
+  onTimeSlotClick?: (date: Date, hour: number, minute: number) => void;
   onEventClick: (event: CalendarEvent) => void;
-  onEventDragStart: (event: CalendarEvent, e: React.DragEvent) => void;
+  onEventDragStart?: (event: CalendarEvent, e: React.DragEvent) => void;
   onEventDrop?: (eventId: string, date: Date, hour: number, minute: number) => void;
   onBusinessHoursClick?: (event: CalendarEvent) => void;
 }

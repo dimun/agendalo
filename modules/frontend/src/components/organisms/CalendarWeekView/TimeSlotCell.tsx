@@ -14,10 +14,10 @@ interface TimeSlotCellProps {
     minute: number | null;
     dateString?: string;
   };
-  onTimeSlotClick: (date: Date, hour: number, minute: number) => void;
-  onDragEnter: (date: Date, hour: number, minute: number) => void;
-  onDragLeave: () => void;
-  onDrop: (e: React.DragEvent, date: Date, hour: number, minute: number) => void;
+  onTimeSlotClick?: (date: Date, hour: number, minute: number) => void;
+  onDragEnter?: (date: Date, hour: number, minute: number) => void;
+  onDragLeave?: () => void;
+  onDrop?: (e: React.DragEvent, date: Date, hour: number, minute: number) => void;
 }
 
 export function TimeSlotCell({
@@ -48,24 +48,26 @@ export function TimeSlotCell({
   return (
     <div
       style={{ height: `${100 / TOTAL_SLOTS}%` }}
-      onClick={() => onTimeSlotClick(date, hour, minute)}
-      onDragOver={(e) => {
+      onClick={onTimeSlotClick ? () => onTimeSlotClick(date, hour, minute) : undefined}
+      onDragOver={onDragEnter ? (e) => {
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
         const normalizedDay = normalizeDate(date);
         onDragEnter(normalizedDay, hour, minute);
-      }}
-      onDragLeave={(e) => {
+      } : undefined}
+      onDragLeave={onDragLeave ? (e) => {
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         const x = e.clientX;
         const y = e.clientY;
         if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
           onDragLeave();
         }
-      }}
-      onDrop={(e) => onDrop(e, date, hour, minute)}
-      className={`border-b cursor-pointer transition-colors relative ${
+      } : undefined}
+      onDrop={onDrop ? (e) => onDrop(e, date, hour, minute) : undefined}
+      className={`border-b transition-colors relative ${
+        onTimeSlotClick ? 'cursor-pointer' : ''
+      } ${
         hasBusinessHours
           ? 'bg-green-50 hover:bg-green-100'
           : 'border-gray-100 hover:bg-blue-50'

@@ -2,6 +2,7 @@ import type { IGateway } from './interfaces';
 import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
 import type { BusinessServiceHours, BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../types/businessHours';
 import type { Person, Role, HoursFilters } from '../types/calendar';
+import type { Agenda } from '../types/agenda';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
@@ -115,6 +116,19 @@ export class ApiGateway implements IGateway {
     await this.fetchJson<void>(`${API_BASE_URL}/business-service-hours/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  async getAgendas(roleId: string, status?: string): Promise<Agenda[]> {
+    const params = new URLSearchParams();
+    params.append('role_id', roleId);
+    if (status) {
+      params.append('status', status);
+    }
+    return this.fetchJson<Agenda[]>(`${API_BASE_URL}/agendas?${params}`);
+  }
+
+  async getAgenda(agendaId: string): Promise<Agenda> {
+    return this.fetchJson<Agenda>(`${API_BASE_URL}/agendas/${agendaId}`);
   }
 }
 

@@ -2,6 +2,7 @@ import type { AvailabilityHours } from './availability';
 import type { BusinessServiceHours } from './businessHours';
 
 export type CalendarView = 'week' | 'month';
+export type CalendarMode = 'planning' | 'schedule';
 
 export interface CalendarEvent {
   id: string;

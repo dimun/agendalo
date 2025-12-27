@@ -17,13 +17,13 @@ interface DayColumnProps {
     eventId: string | null;
     dateString?: string;
   };
-  onTimeSlotClick: (date: Date, hour: number, minute: number) => void;
+  onTimeSlotClick?: (date: Date, hour: number, minute: number) => void;
   onEventClick: (event: CalendarEvent) => void;
-  onEventDragStart: (event: CalendarEvent, e: React.DragEvent) => void;
+  onEventDragStart?: (event: CalendarEvent, e: React.DragEvent) => void;
   onBusinessHoursClick?: (event: CalendarEvent) => void;
-  onDragEnter: (date: Date, hour: number, minute: number) => void;
-  onDragLeave: () => void;
-  onDrop: (e: React.DragEvent, date: Date, hour: number, minute: number) => void;
+  onDragEnter?: (date: Date, hour: number, minute: number) => void;
+  onDragLeave?: () => void;
+  onDrop?: (e: React.DragEvent, date: Date, hour: number, minute: number) => void;
   setDragOverState: (state: {
     date: Date | null;
     hour: number | null;
@@ -101,10 +101,10 @@ export function DayColumn({
               key={event.id}
               event={event}
               onClick={() => onEventClick(event)}
-              onDragStart={(e) => {
+              onDragStart={onEventDragStart ? (e) => {
                 onEventDragStart(event, e);
                 setDragOverState({ date: null, hour: null, minute: null, event: event, eventId: event.id });
-              }}
+              } : undefined}
               style={adjustedStyle}
             />
           );

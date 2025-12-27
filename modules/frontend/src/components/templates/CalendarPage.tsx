@@ -6,9 +6,11 @@ import { HoursFormModal } from '../organisms/HoursFormModal';
 import { ConfirmModal } from '../molecules/ConfirmModal';
 import { Tabs } from '../molecules/Tabs';
 import { Button } from '../atoms/Button';
+import { Select } from '../atoms/Select';
 import { useCalendar } from '../../hooks/useCalendar';
 import { useHours } from '../../hooks/useHours';
-import type { CalendarEvent } from '../../types/calendar';
+import { useAgendas } from '../../hooks/useAgendas';
+import type { CalendarEvent, CalendarMode } from '../../types/calendar';
 import type { AvailabilityHoursCreate } from '../../types/availability';
 import type { BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../../types/businessHours';
 import { ApiGateway } from '../../gateways/apiGateway';
@@ -26,9 +28,11 @@ export function CalendarPage() {
   const [clickedDate, setClickedDate] = useState<Date | undefined>();
   const [clickedTime, setClickedTime] = useState<{ start: string; end: string } | undefined>();
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<CalendarMode>('planning');
 
   const calendar = useCalendar();
   const hours = useHours(gateway, calendar.dateRange.start, calendar.dateRange.end);
+  const agendas = useAgendas(gateway, hours.selectedRoleId, calendar.dateRange.start, calendar.dateRange.end);
 
   // Auto-select first role if none selected (obligatory)
   useEffect(() => {
@@ -36,6 +40,11 @@ export function CalendarPage() {
       hours.setSelectedRoleId(hours.roles[0].id);
     }
   }, [hours.roles, hours.selectedRoleId, hours.setSelectedRoleId]);
+
+  // Get calendar events based on mode
+  const calendarEvents = mode === 'planning' ? hours.calendarEvents : agendas.calendarEvents;
+  const isLoading = mode === 'planning' ? hours.loading : agendas.loading;
+  const hasError = mode === 'planning' ? hours.error : agendas.error;
 
   const handleTimeSlotClick = (date: Date, hour: number, minute: number) => {
     const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
@@ -179,7 +188,7 @@ export function CalendarPage() {
     }
   };
 
-  if (hours.loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-lg text-gray-600">Loading calendar...</div>
@@ -187,10 +196,10 @@ export function CalendarPage() {
     );
   }
 
-  if (hours.error || error) {
+  if (hasError || error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-lg text-red-600">Error: {hours.error || error}</div>
+        <div className="text-lg text-red-600">Error: {hasError || error}</div>
       </div>
     );
   }
@@ -219,12 +228,51 @@ export function CalendarPage() {
 
       {hours.roles.length > 0 && (
         <div className="bg-white border-b border-gray-200">
-          <Tabs
-            tabs={roleTabs}
-            activeTabId={effectiveRoleId}
-            onTabChange={(roleId) => hours.setSelectedRoleId(roleId)}
-            className="px-4"
-          />
+          <div className="flex items-center justify-between px-4">
+            <Tabs
+              tabs={roleTabs}
+              activeTabId={effectiveRoleId}
+              onTabChange={(roleId) => hours.setSelectedRoleId(roleId)}
+            />
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 border rounded-md">
+                <button
+                  onClick={() => setMode('planning')}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    mode === 'planning'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Planning
+                </button>
+                <button
+                  onClick={() => setMode('schedule')}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    mode === 'schedule'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Schedule
+                </button>
+              </div>
+              {mode === 'schedule' && agendas.agendas.length > 0 && (
+                <Select
+                  value={agendas.selectedAgendaId || ''}
+                  onChange={(e) => agendas.setSelectedAgendaId(e.target.value || null)}
+                  className="w-64"
+                >
+                  <option value="">Select an agenda</option>
+                  {agendas.agendas.map((agenda) => (
+                    <option key={agenda.id} value={agenda.id}>
+                      {new Date(agenda.created_at).toLocaleDateString()} - {agenda.status}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -232,32 +280,34 @@ export function CalendarPage() {
         {calendar.view === 'week' ? (
           <CalendarWeekView
             currentDate={calendar.currentDate}
-            events={hours.calendarEvents}
+            events={calendarEvents}
             selectedRoleId={effectiveRoleId}
-            onTimeSlotClick={handleTimeSlotClick}
+            onTimeSlotClick={mode === 'planning' ? handleTimeSlotClick : undefined}
             onEventClick={handleEventClick}
-            onEventDragStart={handleEventDragStart}
-            onEventDrop={handleEventDrop}
-            onBusinessHoursClick={handleBusinessHoursClick}
+            onEventDragStart={mode === 'planning' ? handleEventDragStart : undefined}
+            onEventDrop={mode === 'planning' ? handleEventDrop : undefined}
+            onBusinessHoursClick={mode === 'planning' ? handleBusinessHoursClick : undefined}
           />
         ) : (
           <CalendarMonthView
             currentDate={calendar.currentDate}
-            events={hours.calendarEvents}
+            events={calendarEvents}
             onDayClick={calendar.navigateToDate}
             onEventClick={handleEventClick}
           />
         )}
       </div>
 
-      <div className="bg-white border-t border-gray-200 px-4 py-2 flex justify-end gap-2">
-        <Button variant="primary" onClick={handleAddAvailability}>
-          Add Availability
-        </Button>
-        <Button variant="secondary" onClick={handleAddBusinessHours}>
-          Add Business Hours
-        </Button>
-      </div>
+      {mode === 'planning' && (
+        <div className="bg-white border-t border-gray-200 px-4 py-2 flex justify-end gap-2">
+          <Button variant="primary" onClick={handleAddAvailability}>
+            Add Availability
+          </Button>
+          <Button variant="secondary" onClick={handleAddBusinessHours}>
+            Add Business Hours
+          </Button>
+        </div>
+      )}
 
       <HoursFormModal
         isOpen={modalOpen}
