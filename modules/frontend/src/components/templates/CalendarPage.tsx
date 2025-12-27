@@ -49,12 +49,13 @@ export function CalendarPage() {
     setModalOpen(true);
   };
 
-  const handleSubmit = async (data: AvailabilityHoursCreate | BusinessServiceHoursCreate) => {
+  const handleSubmit = async (data: AvailabilityHoursCreate | BusinessServiceHoursCreate, personId?: string) => {
     if (modalType === 'availability') {
-      if (!hours.selectedPersonId) {
-        throw new Error('Please select a person first');
+      const selectedPersonId = personId || hours.selectedPersonId;
+      if (!selectedPersonId) {
+        throw new Error('Please select a person');
       }
-      await hours.createAvailabilityHours(hours.selectedPersonId, data as AvailabilityHoursCreate);
+      await hours.createAvailabilityHours(selectedPersonId, data as AvailabilityHoursCreate);
     } else {
       await hours.createBusinessServiceHours(data as BusinessServiceHoursCreate);
     }
