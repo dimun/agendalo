@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CalendarHeader } from '../organisms/CalendarHeader';
 import { CalendarWeekView } from '../organisms/CalendarWeekView';
 import { CalendarMonthView } from '../organisms/CalendarMonthView';
@@ -23,6 +23,13 @@ export function CalendarPage() {
 
   const calendar = useCalendar();
   const hours = useHours(gateway, calendar.dateRange.start, calendar.dateRange.end);
+
+  // Auto-select first role if none selected (obligatory)
+  useEffect(() => {
+    if (!hours.selectedRoleId && hours.roles.length > 0) {
+      hours.setSelectedRoleId(hours.roles[0].id);
+    }
+  }, [hours.roles.length, hours.selectedRoleId, hours.setSelectedRoleId]);
 
   const handleTimeSlotClick = (date: Date, hour: number, minute: number) => {
     const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
@@ -86,11 +93,6 @@ export function CalendarPage() {
 
   // Ensure a role is always selected (obligatory)
   const effectiveRoleId = hours.selectedRoleId || (hours.roles.length > 0 ? hours.roles[0].id : null);
-  
-  // Auto-select first role if none selected
-  if (!hours.selectedRoleId && hours.roles.length > 0) {
-    hours.setSelectedRoleId(hours.roles[0].id);
-  }
 
   const roleTabs = hours.roles.map((role) => ({
     id: role.id,
