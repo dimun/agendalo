@@ -3,6 +3,7 @@ import { CalendarHeader } from '../organisms/CalendarHeader';
 import { CalendarWeekView } from '../organisms/CalendarWeekView';
 import { CalendarMonthView } from '../organisms/CalendarMonthView';
 import { HoursFormModal } from '../organisms/HoursFormModal';
+import { ConfirmModal } from '../molecules/ConfirmModal';
 import { Tabs } from '../molecules/Tabs';
 import { Button } from '../atoms/Button';
 import { useCalendar } from '../../hooks/useCalendar';
@@ -18,6 +19,8 @@ const gateway = USE_LOCAL_GATEWAY ? new LocalGateway() : new ApiGateway();
 
 export function CalendarPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
   const [modalType, setModalType] = useState<'availability' | 'business'>('availability');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [clickedDate, setClickedDate] = useState<Date | undefined>();
@@ -51,26 +54,22 @@ export function CalendarPage() {
     setModalOpen(true);
   };
 
-  const handleBusinessHoursClick = async (event: CalendarEvent) => {
+  const handleBusinessHoursClick = (event: CalendarEvent) => {
     if (event.type !== 'business') return;
+    setEventToDelete(event);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!eventToDelete) return;
     
-    const roleName = event.role_name || 'Business Hours';
-    const dayName = event.day_of_week !== null 
-      ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][event.day_of_week]
-      : 'Specific Date';
-    
-    const confirmMessage = `Delete business hours for ${roleName}?\n\n` +
-      `Day: ${dayName}\n` +
-      `Time: ${event.start_time} - ${event.end_time}`;
-    
-    if (window.confirm(confirmMessage)) {
-      try {
-        setError(null);
-        await hours.deleteBusinessServiceHours(event.id);
-        hours.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete business hours');
-      }
+    try {
+      setError(null);
+      await hours.deleteBusinessServiceHours(eventToDelete.id);
+      hours.refresh();
+      setEventToDelete(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete business hours');
     }
   };
 

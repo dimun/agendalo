@@ -347,17 +347,6 @@ export function CalendarWeekView({
                           : ''
                       }`}
                     >
-                      {hasBusinessHours && (() => {
-                        const businessHoursEvents = getBusinessHoursForSlot(day, slotIndex);
-                        const roleName = businessHoursEvents[0]?.role_name || 'Business Hours';
-                        return (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-xs text-green-700 font-medium opacity-40 select-none">
-                              {roleName} - Business Hours
-                            </span>
-                          </div>
-                        );
-                      })()}
                     </div>
                   );
                 })}
@@ -366,11 +355,12 @@ export function CalendarWeekView({
                 {businessBlocks.map((block, blockIndex) => {
                   const topPercent = (block.startSlot / (24 * SLOTS_PER_HOUR)) * 100;
                   const heightPercent = ((block.endSlot - block.startSlot) / (24 * SLOTS_PER_HOUR)) * 100;
+                  const roleName = block.event.role_name || 'Business Hours';
                   
                   return (
                     <div
                       key={`block-${blockIndex}`}
-                      className="absolute cursor-pointer hover:opacity-80 transition-opacity"
+                      className="absolute group"
                       style={{
                         top: `${topPercent}%`,
                         left: 0,
@@ -381,13 +371,38 @@ export function CalendarWeekView({
                         boxSizing: 'border-box',
                         zIndex: 5,
                       }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onBusinessHoursClick) {
-                          onBusinessHoursClick(block.event);
-                        }
-                      }}
-                    />
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-xs text-green-700 font-medium opacity-40 select-none">
+                          {roleName} Business Hours
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onBusinessHoursClick) {
+                            onBusinessHoursClick(block.event);
+                          }
+                        }}
+                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 text-white rounded p-1 shadow-md z-10"
+                        title="Delete business hours"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   );
                 })}
 
