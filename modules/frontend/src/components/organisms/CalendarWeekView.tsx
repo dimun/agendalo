@@ -214,7 +214,12 @@ export function CalendarWeekView({
     e.stopPropagation();
     const eventId = e.dataTransfer.getData('eventId') || dragOverState.eventId;
     if (eventId && onEventDrop) {
-      onEventDrop(eventId, date, hour, minute);
+      // Use the date from dragOverState if available, as it's the normalized date we've been tracking
+      // Otherwise fall back to the date parameter (normalized)
+      const dropDate = dragOverState.date || normalizeDate(date);
+      const dropHour = dragOverState.hour !== null ? dragOverState.hour : hour;
+      const dropMinute = dragOverState.minute !== null ? dragOverState.minute : minute;
+      onEventDrop(eventId, dropDate, dropHour, dropMinute);
     }
     setDragOverState({ date: null, hour: null, minute: null, event: null, eventId: null, dateString: undefined });
   };
