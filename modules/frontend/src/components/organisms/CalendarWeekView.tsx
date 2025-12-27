@@ -21,6 +21,7 @@ interface DragOverState {
   minute: number | null;
   event: CalendarEvent | null;
   eventId: string | null;
+  dateString?: string; // ISO date string for easier comparison
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -191,12 +192,21 @@ export function CalendarWeekView({
     if (dragOverState.eventId) {
       const event = events.find(ev => ev.id === dragOverState.eventId);
       const normalizedDate = normalizeDate(date);
-      setDragOverState({ ...dragOverState, date: normalizedDate, hour, minute, event: event || null });
+      // Store the date string for easier debugging and comparison
+      const dateString = normalizedDate.toISOString().split('T')[0];
+      setDragOverState({ 
+        ...dragOverState, 
+        date: normalizedDate, 
+        hour, 
+        minute, 
+        event: event || null,
+        dateString // Store for comparison
+      });
     }
   };
 
   const handleDragLeave = () => {
-    setDragOverState({ date: null, hour: null, minute: null, event: null, eventId: null });
+    setDragOverState({ date: null, hour: null, minute: null, event: null, eventId: null, dateString: undefined });
   };
 
   const handleDrop = (e: React.DragEvent, date: Date, hour: number, minute: number) => {
@@ -206,7 +216,7 @@ export function CalendarWeekView({
     if (eventId && onEventDrop) {
       onEventDrop(eventId, date, hour, minute);
     }
-    setDragOverState({ date: null, hour: null, minute: null, event: null, eventId: null });
+    setDragOverState({ date: null, hour: null, minute: null, event: null, eventId: null, dateString: undefined });
   };
 
   const getPreviewEvent = (date: Date) => {
@@ -398,10 +408,11 @@ export function CalendarWeekView({
                 {/* Preview of dragged event - only render in the correct day column */}
                 {(() => {
                   // Only render preview if this is the correct day column
-                  if (!dragOverState.date) return null;
-                  const normalizedDragDate = normalizeDate(dragOverState.date);
-                  const normalizedDay = normalizeDate(day);
-                  if (normalizedDragDate.getTime() !== normalizedDay.getTime()) return null;
+                  if (!dragOverState.date || !dragOverState.dateString) return null;
+                  
+                  // Compare using ISO date strings to avoid timezone issues
+                  const dayString = normalizeDate(day).toISOString().split('T')[0];
+                  if (dragOverState.dateString !== dayString) return null;
                   
                   const preview = getPreviewEvent(day);
                   if (!preview) return null;
