@@ -46,9 +46,17 @@ export function CalendarWeekView({
   });
 
   const normalizeDate = (date: Date): Date => {
-    const normalized = new Date(date);
-    normalized.setHours(0, 0, 0, 0);
+    // Use local date components to avoid timezone issues
+    const normalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     return normalized;
+  };
+
+  const getDateString = (date: Date): string => {
+    // Get date string in local timezone (YYYY-MM-DD)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -218,15 +226,22 @@ export function CalendarWeekView({
     if (eventId && onEventDrop) {
       // Always use dragOverState values if available - these are what the preview is showing
       if (dragOverState.date && dragOverState.hour !== null && dragOverState.minute !== null) {
+        // Reconstruct the date from the dateString to ensure we use the correct local date
+        const [year, month, day] = dragOverState.dateString!.split('-').map(Number);
+        const dropDate = new Date(year, month - 1, day); // month is 0-indexed
+        
         console.log('Dropping with dragOverState:', {
-          date: dragOverState.date.toISOString(),
           dateString: dragOverState.dateString,
+          reconstructedDate: dropDate.toISOString(),
+          reconstructedDateLocal: getDateString(dropDate),
           hour: dragOverState.hour,
           minute: dragOverState.minute,
           dayParam: date.toISOString(),
-          dayParamNormalized: normalizeDate(date).toISOString()
+          dayParamLocal: getDateString(date),
+          dayParamNormalized: normalizeDate(date).toISOString(),
+          dayParamNormalizedLocal: getDateString(normalizeDate(date))
         });
-        onEventDrop(eventId, dragOverState.date, dragOverState.hour, dragOverState.minute);
+        onEventDrop(eventId, dropDate, dragOverState.hour, dragOverState.minute);
       } else {
         // Fallback to parameters if dragOverState is not available
         const normalizedDate = normalizeDate(date);
@@ -354,13 +369,24 @@ export function CalendarWeekView({
                           : 'border-gray-100 hover:bg-blue-50'
                       } ${
                         (() => {
-                          if (!dragOverState.date || dragOverState.hour === null || dragOverState.minute === null) {
+                          if (!dragOverState.date || !dragOverState.dateString || dragOverState.hour === null || dragOverState.minute === null) {
                             return false;
                           }
-                          const normalizedDragDate = normalizeDate(dragOverState.date);
-                          const normalizedDay = normalizeDate(day);
-                          const isSameDate = normalizedDragDate.getTime() === normalizedDay.getTime();
-                          return isSameDate && dragOverState.hour === hour && dragOverState.minute === minute;
+                          // Compare using date strings to avoid timezone issues
+                          const dayString = getDateString(day);
+                          const isSameDate = dragOverState.dateString === dayString;
+                          const isHighlighted = isSameDate && dragOverState.hour === hour && dragOverState.minute === minute;
+                          if (isHighlighted) {
+                            console.log('Highlighting slot:', {
+                              dayString,
+                              dragOverStateDateString: dragOverState.dateString,
+                              hour,
+                              minute,
+                              dragOverStateHour: dragOverState.hour,
+                              dragOverStateMinute: dragOverState.minute
+                            });
+                          }
+                          return isHighlighted;
                         })()
                           ? 'bg-blue-200 border-blue-400 border-2'
                           : ''
@@ -432,8 +458,8 @@ export function CalendarWeekView({
                   // Only render preview if this is the correct day column
                   if (!dragOverState.date || !dragOverState.dateString) return null;
                   
-                  // Compare using ISO date strings to avoid timezone issues
-                  const dayString = normalizeDate(day).toISOString().split('T')[0];
+                  // Compare using local date strings to avoid timezone issues
+                  const dayString = getDateString(day);
                   if (dragOverState.dateString !== dayString) return null;
                   
                   const preview = getPreviewEvent(day);
