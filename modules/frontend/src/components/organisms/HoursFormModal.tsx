@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Person, Role } from '../../types/calendar';
 import type { AvailabilityHoursCreate } from '../../types/availability';
-import type { BusinessServiceHoursCreate } from '../../types/businessHours';
+import type { BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../../types/businessHours';
 import { Button } from '../atoms/Button';
 import { Select } from '../atoms/Select';
 import { FormField } from '../molecules/FormField';
@@ -12,6 +12,7 @@ interface HoursFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: AvailabilityHoursCreate | BusinessServiceHoursCreate, personId?: string, eventId?: string) => Promise<void>;
+  onBulkSubmit?: (data: BusinessServiceHoursBulkCreate) => Promise<void>;
   type: 'availability' | 'business';
   people: Person[];
   roles: Role[];
@@ -24,6 +25,7 @@ export function HoursFormModal({
   isOpen,
   onClose,
   onSubmit,
+  onBulkSubmit,
   type,
   people,
   roles,
@@ -43,6 +45,8 @@ export function HoursFormModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [eventId, setEventId] = useState<string | undefined>(undefined);
+  const [dayRangeMode, setDayRangeMode] = useState<'individual' | 'range'>('individual');
+  const [dayRange, setDayRange] = useState('mon-fri');
 
   useEffect(() => {
     if (initialEvent) {
@@ -110,17 +114,29 @@ export function HoursFormModal({
         };
         await onSubmit(data, personId, eventId);
       } else {
-        const data: BusinessServiceHoursCreate = {
-          role_id: roleId,
-          start_time: startTime,
-          end_time: endTime,
-          is_recurring: isRecurring,
-          day_of_week: isRecurring ? dayOfWeek : null,
-          specific_date: isRecurring ? null : specificDate || null,
-          start_date: isRecurring && startDate ? startDate : null,
-          end_date: isRecurring && endDate ? endDate : null,
-        };
-        await onSubmit(data, undefined, eventId);
+        if (dayRangeMode === 'range' && onBulkSubmit) {
+          const bulkData: BusinessServiceHoursBulkCreate = {
+            role_id: roleId,
+            start_time: startTime,
+            end_time: endTime,
+            days: dayRange,
+            start_date: startDate || null,
+            end_date: endDate || null,
+          };
+          await onBulkSubmit(bulkData);
+        } else {
+          const data: BusinessServiceHoursCreate = {
+            role_id: roleId,
+            start_time: startTime,
+            end_time: endTime,
+            is_recurring: isRecurring,
+            day_of_week: isRecurring ? dayOfWeek : null,
+            specific_date: isRecurring ? null : specificDate || null,
+            start_date: isRecurring && startDate ? startDate : null,
+            end_date: isRecurring && endDate ? endDate : null,
+          };
+          await onSubmit(data, undefined, eventId);
+        }
       }
       onClose();
     } catch (err) {
@@ -173,66 +189,186 @@ export function HoursFormModal({
             onEndTimeChange={setEndTime}
           />
 
-          <FormField label="Type">
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  checked={isRecurring}
-                  onChange={() => setIsRecurring(true)}
-                  className="mr-2"
-                />
-                Recurring
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  checked={!isRecurring}
-                  onChange={() => setIsRecurring(false)}
-                  className="mr-2"
-                />
-                Specific Date
-              </label>
-            </div>
-          </FormField>
-
-          {isRecurring ? (
+          {type === 'business' && !initialEvent ? (
             <>
-              <FormField label="Day of Week" required>
-                <Select
-                  value={dayOfWeek?.toString() || ''}
-                  onChange={(e) => setDayOfWeek(e.target.value ? parseInt(e.target.value) : null)}
-                  required
-                >
-                  <option value="">Select day</option>
-                  <option value="0">Monday</option>
-                  <option value="1">Tuesday</option>
-                  <option value="2">Wednesday</option>
-                  <option value="3">Thursday</option>
-                  <option value="4">Friday</option>
-                  <option value="5">Saturday</option>
-                  <option value="6">Sunday</option>
-                </Select>
+              <FormField label="Day Selection Mode">
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      checked={dayRangeMode === 'individual'}
+                      onChange={() => setDayRangeMode('individual')}
+                      className="mr-2"
+                    />
+                    Individual Day
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      checked={dayRangeMode === 'range'}
+                      onChange={() => setDayRangeMode('range')}
+                      className="mr-2"
+                    />
+                    Day Range
+                  </label>
+                </div>
               </FormField>
-              <DatePicker
-                label="Start Date (optional)"
-                value={startDate}
-                onChange={setStartDate}
-              />
-              <DatePicker
-                label="End Date (optional)"
-                value={endDate}
-                onChange={setEndDate}
-                min={startDate}
-              />
+
+              {dayRangeMode === 'range' ? (
+                <>
+                  <FormField label="Day Range" required>
+                    <Select
+                      value={dayRange}
+                      onChange={(e) => setDayRange(e.target.value)}
+                      required
+                    >
+                      <option value="mon-fri">Monday - Friday</option>
+                      <option value="mon-sat">Monday - Saturday</option>
+                      <option value="all">All Days (Monday - Sunday)</option>
+                    </Select>
+                  </FormField>
+                  <DatePicker
+                    label="Start Date (optional)"
+                    value={startDate}
+                    onChange={setStartDate}
+                  />
+                  <DatePicker
+                    label="End Date (optional)"
+                    value={endDate}
+                    onChange={setEndDate}
+                    min={startDate}
+                  />
+                </>
+              ) : (
+                <>
+                  <FormField label="Type">
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          checked={isRecurring}
+                          onChange={() => setIsRecurring(true)}
+                          className="mr-2"
+                        />
+                        Recurring
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          checked={!isRecurring}
+                          onChange={() => setIsRecurring(false)}
+                          className="mr-2"
+                        />
+                        Specific Date
+                      </label>
+                    </div>
+                  </FormField>
+
+                  {isRecurring ? (
+                    <>
+                      <FormField label="Day of Week" required>
+                        <Select
+                          value={dayOfWeek?.toString() || ''}
+                          onChange={(e) => setDayOfWeek(e.target.value ? parseInt(e.target.value) : null)}
+                          required
+                        >
+                          <option value="">Select day</option>
+                          <option value="0">Monday</option>
+                          <option value="1">Tuesday</option>
+                          <option value="2">Wednesday</option>
+                          <option value="3">Thursday</option>
+                          <option value="4">Friday</option>
+                          <option value="5">Saturday</option>
+                          <option value="6">Sunday</option>
+                        </Select>
+                      </FormField>
+                      <DatePicker
+                        label="Start Date (optional)"
+                        value={startDate}
+                        onChange={setStartDate}
+                      />
+                      <DatePicker
+                        label="End Date (optional)"
+                        value={endDate}
+                        onChange={setEndDate}
+                        min={startDate}
+                      />
+                    </>
+                  ) : (
+                    <DatePicker
+                      label="Date"
+                      value={specificDate}
+                      onChange={setSpecificDate}
+                      required
+                    />
+                  )}
+                </>
+              )}
             </>
           ) : (
-            <DatePicker
-              label="Date"
-              value={specificDate}
-              onChange={setSpecificDate}
-              required
-            />
+            <>
+              <FormField label="Type">
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      checked={isRecurring}
+                      onChange={() => setIsRecurring(true)}
+                      className="mr-2"
+                    />
+                    Recurring
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      checked={!isRecurring}
+                      onChange={() => setIsRecurring(false)}
+                      className="mr-2"
+                    />
+                    Specific Date
+                  </label>
+                </div>
+              </FormField>
+
+              {isRecurring ? (
+                <>
+                  <FormField label="Day of Week" required>
+                    <Select
+                      value={dayOfWeek?.toString() || ''}
+                      onChange={(e) => setDayOfWeek(e.target.value ? parseInt(e.target.value) : null)}
+                      required
+                    >
+                      <option value="">Select day</option>
+                      <option value="0">Monday</option>
+                      <option value="1">Tuesday</option>
+                      <option value="2">Wednesday</option>
+                      <option value="3">Thursday</option>
+                      <option value="4">Friday</option>
+                      <option value="5">Saturday</option>
+                      <option value="6">Sunday</option>
+                    </Select>
+                  </FormField>
+                  <DatePicker
+                    label="Start Date (optional)"
+                    value={startDate}
+                    onChange={setStartDate}
+                  />
+                  <DatePicker
+                    label="End Date (optional)"
+                    value={endDate}
+                    onChange={setEndDate}
+                    min={startDate}
+                  />
+                </>
+              ) : (
+                <DatePicker
+                  label="Date"
+                  value={specificDate}
+                  onChange={setSpecificDate}
+                  required
+                />
+              )}
+            </>
           )}
 
           {error && <div className="text-red-600 text-sm mb-4">{error}</div>}

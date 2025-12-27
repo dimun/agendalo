@@ -3,7 +3,6 @@ import { CalendarHeader } from '../organisms/CalendarHeader';
 import { CalendarWeekView } from '../organisms/CalendarWeekView';
 import { CalendarMonthView } from '../organisms/CalendarMonthView';
 import { HoursFormModal } from '../organisms/HoursFormModal';
-import { BusinessHoursBulkFormModal } from '../organisms/BusinessHoursBulkFormModal';
 import { Tabs } from '../molecules/Tabs';
 import { Button } from '../atoms/Button';
 import { useCalendar } from '../../hooks/useCalendar';
@@ -19,7 +18,6 @@ const gateway = USE_LOCAL_GATEWAY ? new LocalGateway() : new ApiGateway();
 
 export function CalendarPage() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'availability' | 'business'>('availability');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [clickedDate, setClickedDate] = useState<Date | undefined>();
@@ -61,10 +59,6 @@ export function CalendarPage() {
   const handleAddBusinessHours = () => {
     setModalType('business');
     setModalOpen(true);
-  };
-
-  const handleAddBusinessHoursBulk = () => {
-    setBulkModalOpen(true);
   };
 
   const handleBulkSubmit = async (data: BusinessServiceHoursBulkCreate) => {
@@ -240,9 +234,6 @@ export function CalendarPage() {
         <Button variant="secondary" onClick={handleAddBusinessHours}>
           Add Business Hours
         </Button>
-        <Button variant="secondary" onClick={handleAddBusinessHoursBulk}>
-          Add Business Hours (Bulk)
-        </Button>
       </div>
 
       <HoursFormModal
@@ -254,21 +245,13 @@ export function CalendarPage() {
           setClickedTime(undefined);
         }}
         onSubmit={handleSubmit}
+        onBulkSubmit={handleBulkSubmit}
         type={modalType}
         people={hours.people}
         roles={hours.roles}
         initialDate={clickedDate}
         initialTime={clickedTime}
         initialEvent={selectedEvent}
-      />
-
-      <BusinessHoursBulkFormModal
-        isOpen={bulkModalOpen}
-        onClose={() => {
-          setBulkModalOpen(false);
-        }}
-        onSubmit={handleBulkSubmit}
-        roles={hours.roles}
       />
     </div>
   );
