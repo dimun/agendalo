@@ -2,6 +2,7 @@ import sqlite3
 from typing import Generator
 
 from modules.main_backend.config import settings
+from modules.main_backend.database.seeds import seed_database
 
 
 def get_db_connection() -> Generator[sqlite3.Connection, None, None]:
@@ -108,4 +109,6 @@ def init_database() -> None:
 
     conn.commit()
     conn.close()
+
+    seed_database()
 
