@@ -39,9 +39,9 @@ export function ConfirmModal({
           </Button>
           <Button
             type="button"
-            variant={variant === 'danger' ? 'primary' : variant}
+            variant="primary"
             onClick={handleConfirm}
-            className={variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : ''}
+            className={variant === 'danger' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' : ''}
           >
             {confirmText}
           </Button>
