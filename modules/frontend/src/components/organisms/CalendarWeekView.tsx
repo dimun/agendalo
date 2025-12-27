@@ -181,10 +181,17 @@ export function CalendarWeekView({
     });
   };
 
+  const normalizeDate = (date: Date): Date => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+
   const handleDragEnter = (date: Date, hour: number, minute: number) => {
     if (dragOverState.eventId) {
       const event = events.find(ev => ev.id === dragOverState.eventId);
-      setDragOverState({ ...dragOverState, date, hour, minute, event: event || null });
+      const normalizedDate = normalizeDate(date);
+      setDragOverState({ ...dragOverState, date: normalizedDate, hour, minute, event: event || null });
     }
   };
 
@@ -208,11 +215,12 @@ export function CalendarWeekView({
       return null;
     }
     
+    // Normalize both dates to midnight for accurate comparison
+    const normalizedDragDate = normalizeDate(dragOverState.date);
+    const normalizedDate = normalizeDate(date);
+    
     // Compare dates more carefully - check if they're the same day
-    const dragDate = dragOverState.date;
-    const isSameDate = dragDate.getFullYear() === date.getFullYear() &&
-                       dragDate.getMonth() === date.getMonth() &&
-                       dragDate.getDate() === date.getDate();
+    const isSameDate = normalizedDragDate.getTime() === normalizedDate.getTime();
     
     if (!isSameDate) {
       return null;
@@ -315,10 +323,9 @@ export function CalendarWeekView({
                           if (!dragOverState.date || dragOverState.hour === null || dragOverState.minute === null) {
                             return false;
                           }
-                          const dragDate = dragOverState.date;
-                          const isSameDate = dragDate.getFullYear() === day.getFullYear() &&
-                                             dragDate.getMonth() === day.getMonth() &&
-                                             dragDate.getDate() === day.getDate();
+                          const normalizedDragDate = normalizeDate(dragOverState.date);
+                          const normalizedDay = normalizeDate(day);
+                          const isSameDate = normalizedDragDate.getTime() === normalizedDay.getTime();
                           return isSameDate && dragOverState.hour === hour && dragOverState.minute === minute;
                         })()
                           ? 'bg-blue-200 border-blue-400 border-2'
