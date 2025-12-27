@@ -1,6 +1,6 @@
-import { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
-import { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
-import { Person, Role, HoursFilters } from '../types/calendar';
+import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
+import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import type { Person, Role, HoursFilters } from '../types/calendar';
 
 export interface IGateway {
   getPeople(): Promise<Person[]>;

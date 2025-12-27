@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Person, Role } from '../../types/calendar';
-import { AvailabilityHoursCreate } from '../../types/availability';
-import { BusinessServiceHoursCreate } from '../../types/businessHours';
+import type { Person, Role } from '../../types/calendar';
+import type { AvailabilityHoursCreate } from '../../types/availability';
+import type { BusinessServiceHoursCreate } from '../../types/businessHours';
 import { Button } from '../atoms/Button';
 import { Select } from '../atoms/Select';
 import { FormField } from '../molecules/FormField';

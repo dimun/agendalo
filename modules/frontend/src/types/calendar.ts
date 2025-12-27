@@ -1,5 +1,5 @@
-import { AvailabilityHours } from './availability';
-import { BusinessServiceHours } from './businessHours';
+import type { AvailabilityHours } from './availability';
+import type { BusinessServiceHours } from './businessHours';
 
 export type CalendarView = 'week' | 'month';
 

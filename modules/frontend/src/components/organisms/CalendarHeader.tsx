@@ -1,4 +1,4 @@
-import { CalendarView, Person, Role } from '../../types/calendar';
+import type { CalendarView, Person, Role } from '../../types/calendar';
 import { Button } from '../atoms/Button';
 import { Select } from '../atoms/Select';
 

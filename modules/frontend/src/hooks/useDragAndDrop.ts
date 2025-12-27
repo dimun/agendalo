@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { CalendarEvent } from '../types/calendar';
+import type { CalendarEvent } from '../types/calendar';
 
 interface DragState {
   isDragging: boolean;

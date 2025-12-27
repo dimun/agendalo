@@ -1,5 +1,5 @@
-import { BusinessServiceHours } from '../types/businessHours';
-import { CalendarEvent } from '../types/calendar';
+import type { BusinessServiceHours } from '../types/businessHours';
+import type { CalendarEvent } from '../types/calendar';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format, parseISO } from 'date-fns';
 
 export function expandBusinessServiceHours(

@@ -1,5 +1,5 @@
-import { CalendarEvent } from '../../types/calendar';
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay, addDays } from 'date-fns';
+import type { CalendarEvent } from '../../types/calendar';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay } from 'date-fns';
 
 interface CalendarMonthViewProps {
   currentDate: Date;

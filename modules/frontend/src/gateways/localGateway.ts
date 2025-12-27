@@ -1,7 +1,7 @@
-import { IGateway } from './interfaces';
-import { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
-import { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
-import { Person, Role, HoursFilters } from '../types/calendar';
+import type { IGateway } from './interfaces';
+import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
+import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import type { Person, Role, HoursFilters } from '../types/calendar';
 
 const mockPeople: Person[] = [
   { id: '1', name: 'John Doe', email: 'john@example.com' },

@@ -1,7 +1,7 @@
-import { IGateway } from './interfaces';
-import { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
-import { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
-import { Person, Role, HoursFilters } from '../types/calendar';
+import type { IGateway } from './interfaces';
+import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
+import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import type { Person, Role, HoursFilters } from '../types/calendar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 

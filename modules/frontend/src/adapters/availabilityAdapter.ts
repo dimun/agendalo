@@ -1,6 +1,6 @@
-import { AvailabilityHours } from '../types/availability';
-import { CalendarEvent } from '../types/calendar';
-import { startOfWeek, endOfWeek, eachDayOfInterval, format, parseISO, isSameDay } from 'date-fns';
+import type { AvailabilityHours } from '../types/availability';
+import type { CalendarEvent } from '../types/calendar';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, parseISO } from 'date-fns';
 
 export function expandAvailabilityHours(
   hours: AvailabilityHours,

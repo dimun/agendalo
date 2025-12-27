@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { IGateway } from '../gateways/interfaces';
-import { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
-import { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
-import { CalendarEvent, Person, Role, HoursFilters } from '../types/calendar';
+import type { IGateway } from '../gateways/interfaces';
+import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
+import type { BusinessServiceHours, BusinessServiceHoursCreate } from '../types/businessHours';
+import type { CalendarEvent, Person, Role, HoursFilters } from '../types/calendar';
 import { toCalendarEvents as availabilityToEvents } from '../adapters/availabilityAdapter';
 import { toCalendarEvents as businessToEvents } from '../adapters/businessHoursAdapter';
 

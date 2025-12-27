@@ -6,7 +6,7 @@ import { HoursFormModal } from '../organisms/HoursFormModal';
 import { Button } from '../atoms/Button';
 import { useCalendar } from '../../hooks/useCalendar';
 import { useHours } from '../../hooks/useHours';
-import { CalendarEvent, AvailabilityHoursCreate, BusinessServiceHoursCreate } from '../../types/calendar';
+import type { CalendarEvent, AvailabilityHoursCreate, BusinessServiceHoursCreate } from '../../types/calendar';
 import { ApiGateway } from '../../gateways/apiGateway';
 import { LocalGateway } from '../../gateways/localGateway';
 

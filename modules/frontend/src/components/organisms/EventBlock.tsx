@@ -1,5 +1,4 @@
-import { CalendarEvent } from '../../types/calendar';
-import { format } from 'date-fns';
+import type { CalendarEvent } from '../../types/calendar';
 
 interface EventBlockProps {
   event: CalendarEvent;

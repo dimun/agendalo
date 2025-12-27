@@ -1,10 +1,7 @@
-import { ReactNode } from 'react';
-import { Input } from '../atoms/Input';
-import { Select } from '../atoms/Select';
+import type { ReactNode } from 'react';
 
 interface FormFieldProps {
   label: string;
-  error?: string;
   required?: boolean;
   children: ReactNode;
 }

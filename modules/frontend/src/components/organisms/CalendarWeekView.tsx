@@ -1,4 +1,4 @@
-import { CalendarEvent } from '../../types/calendar';
+import type { CalendarEvent } from '../../types/calendar';
 import { format, isSameDay, startOfWeek, eachDayOfInterval, addDays } from 'date-fns';
 import { EventBlock } from './EventBlock';
 import { TimeSlot } from '../atoms/TimeSlot';
