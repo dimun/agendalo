@@ -116,8 +116,22 @@ export function CalendarPage() {
         
         // For recurring events moved to a specific date, convert to specific_date
         // For non-recurring, update the specific_date
+        // Use local date components to avoid timezone issues
+        const getLocalDateString = (d: Date): string => {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        
         const isRecurring = event.is_recurring;
-        const newSpecificDate = isRecurring ? date.toISOString().split('T')[0] : (event.specific_date ? date.toISOString().split('T')[0] : null);
+        const newSpecificDate = isRecurring ? getLocalDateString(date) : (event.specific_date ? getLocalDateString(date) : null);
+        
+        console.log('handleEventDrop date conversion:', {
+          dateISO: date.toISOString(),
+          dateLocal: getLocalDateString(date),
+          newSpecificDate
+        });
         
         // Create update data
         const updateData: AvailabilityHoursCreate = {
