@@ -52,6 +52,10 @@ export function DayColumn({
   const availabilityEvents = getAvailabilityEventsForDay(events, date, selectedRoleId);
   const scheduleEvents = getScheduleEventsForDay(events, date, selectedRoleId);
 
+  if (scheduleEvents.length > 0) {
+    console.log('Schedule events for', date.toISOString(), ':', scheduleEvents);
+  }
+
   return (
     <div className="flex-1 border-r border-gray-200 relative">
       <div className="relative" style={{ height: `${24 * 48}px` }}>

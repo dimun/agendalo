@@ -11,7 +11,9 @@ export function agendaEntriesToCalendarEvents(
     const person = people.find((p) => p.id === entry.person_id);
     const role = roles.find((r) => r.id === entry.role_id);
     
-    const date = new Date(entry.date);
+    const dateString = entry.date;
+    const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     
     return {
       id: entry.id,

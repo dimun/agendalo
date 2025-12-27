@@ -49,6 +49,17 @@ export function CalendarPage() {
   const isLoading = mode === 'planning' ? hours.loading : agendas.loading;
   const hasError = mode === 'planning' ? hours.error : agendas.error;
 
+  useEffect(() => {
+    if (mode === 'schedule') {
+      console.log('Schedule mode - selectedAgenda:', agendas.selectedAgenda);
+      console.log('Schedule mode - calendarEvents count:', calendarEvents.length);
+      console.log('Schedule mode - selectedAgendaId:', agendas.selectedAgendaId);
+      if (calendarEvents.length > 0) {
+        console.log('Schedule mode - first event:', calendarEvents[0]);
+      }
+    }
+  }, [mode, agendas.selectedAgenda, agendas.selectedAgendaId, calendarEvents]);
+
   const handleTimeSlotClick = (date: Date, hour: number, minute: number) => {
     const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
     const endHour = minute >= 30 ? (hour === 23 ? 0 : hour + 1) : hour;
@@ -225,11 +236,11 @@ export function CalendarPage() {
       };
 
       const generatedAgenda = await gateway.generateAgenda(request);
-      agendas.refresh();
       if (generatedAgenda) {
+        await agendas.refresh();
         agendas.setSelectedAgendaId(generatedAgenda.id);
+        setMode('schedule');
       }
-      setMode('schedule');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate agenda';
       if (errorMessage.includes('404') || errorMessage.includes('not found')) {

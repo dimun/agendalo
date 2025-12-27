@@ -24,7 +24,7 @@ export function EventBlock({ event, onClick, onDragStart, style }: EventBlockPro
       style={style}
     >
       <div className="font-medium truncate">
-        {event.type === 'availability' && event.person_name
+        {(event.type === 'availability' || event.type === 'schedule') && event.person_name
           ? event.person_name
           : event.role_name}
       </div>

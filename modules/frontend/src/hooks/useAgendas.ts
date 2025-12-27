@@ -45,7 +45,10 @@ export function useAgendas(
       const data = await gateway.getAgendas(roleId);
       setAgendas(data);
       if (data.length > 0 && !selectedAgendaId) {
-        setSelectedAgendaId(data[0].id);
+        const latestAgenda = data.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0];
+        setSelectedAgendaId(latestAgenda.id);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load agendas');
@@ -76,8 +79,15 @@ export function useAgendas(
     }
 
     const filteredEntries = selectedAgenda.entries.filter((entry) => {
-      const entryDate = new Date(entry.date);
-      return entryDate >= startDate && entryDate <= endDate;
+      const dateString = entry.date.split('T')[0];
+      const [year, month, day] = dateString.split('-').map(Number);
+      const entryDate = new Date(year, month - 1, day);
+      
+      const normalizedStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const normalizedEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const normalizedEntryDate = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate());
+      
+      return normalizedEntryDate >= normalizedStartDate && normalizedEntryDate <= normalizedEndDate;
     });
 
     return agendaEntriesToCalendarEvents(filteredEntries, people, roles);
