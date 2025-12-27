@@ -152,14 +152,22 @@ export function CalendarWeekView({
                 return (
                   <div
                     key={slotIndex}
-                    className={`border-b border-gray-100 cursor-pointer transition-colors ${
+                    className={`border-b border-gray-100 cursor-pointer transition-colors relative ${
                       hasBusinessHours
                         ? 'bg-green-50 hover:bg-green-100'
                         : 'hover:bg-blue-50'
                     }`}
                     style={{ height: `${100 / (24 * SLOTS_PER_HOUR)}%` }}
                     onClick={() => onTimeSlotClick(day, hour, minute)}
-                  />
+                  >
+                    {hasBusinessHours && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-xs text-green-300 font-light opacity-30 select-none">
+                          Business Hours
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
 
