@@ -50,6 +50,30 @@ class BusinessServiceHoursService:
         end = date.fromisoformat(end_date)
         return self.business_service_hours_repository.get_by_date_range(start, end)
 
+    def get_business_service_hours_by_role_and_date_range(
+        self, role_id: UUID, start_date: str, end_date: str
+    ) -> list[BusinessServiceHours]:
+        all_by_role = self.business_service_hours_repository.get_by_role(role_id)
+        start = date.fromisoformat(start_date)
+        end = date.fromisoformat(end_date)
+        
+        filtered = []
+        for bsh in all_by_role:
+            if bsh.is_recurring and bsh.day_of_week is not None:
+                if bsh.start_date and bsh.start_date > end:
+                    continue
+                if bsh.end_date and bsh.end_date < start:
+                    continue
+                filtered.append(bsh)
+            elif bsh.specific_date:
+                if start <= bsh.specific_date <= end:
+                    filtered.append(bsh)
+            elif bsh.start_date and bsh.end_date:
+                if not (bsh.end_date < start or bsh.start_date > end):
+                    filtered.append(bsh)
+        
+        return filtered
+
     def get_all_business_service_hours(self) -> list[BusinessServiceHours]:
         return self.business_service_hours_repository.get_all()
 

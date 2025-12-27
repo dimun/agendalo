@@ -54,7 +54,13 @@ def get_business_service_hours(
         get_business_service_hours_service
     ),
 ):
-    if role_id:
+    if role_id and start_date and end_date:
+        business_service_hours_list = (
+            business_service_hours_service.get_business_service_hours_by_role_and_date_range(
+                role_id, start_date.isoformat(), end_date.isoformat()
+            )
+        )
+    elif role_id:
         business_service_hours_list = (
             business_service_hours_service.get_business_service_hours_by_role(role_id)
         )
