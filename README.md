@@ -179,13 +179,13 @@ Balances the total hours worked across all people. This ensures a fair distribut
 Run the test suite:
 
 ```bash
-pytest
+uv run pytest
 ```
 
 Run tests with verbose output:
 
 ```bash
-pytest -v
+uv run pytest -v
 ```
 
 The test suite includes integration tests for all API endpoints and uses an in-memory SQLite database for isolation.
