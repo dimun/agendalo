@@ -162,7 +162,7 @@ export function CalendarWeekView({
                   >
                     {hasBusinessHours && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className="text-xs text-green-300 font-light opacity-30 select-none">
+                        <span className="text-xs text-green-700 font-medium opacity-40 select-none">
                           Business Hours
                         </span>
                       </div>
