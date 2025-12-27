@@ -302,7 +302,9 @@ export function CalendarWeekView({
                         e.preventDefault();
                         e.stopPropagation();
                         e.dataTransfer.dropEffect = 'move';
-                        handleDragEnter(day, hour, minute);
+                        // Normalize the day to ensure consistent comparison
+                        const normalizedDay = normalizeDate(day);
+                        handleDragEnter(normalizedDay, hour, minute);
                       }}
                       onDragLeave={(e) => {
                         // Only clear if we're leaving the time slot (not entering a child)
