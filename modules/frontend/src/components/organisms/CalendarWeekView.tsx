@@ -311,8 +311,16 @@ export function CalendarWeekView({
                           ? 'bg-green-50 hover:bg-green-100'
                           : 'border-gray-100 hover:bg-blue-50'
                       } ${
-                        dragOverState.date && isSameDay(dragOverState.date, day) && 
-                        dragOverState.hour === hour && dragOverState.minute === minute
+                        (() => {
+                          if (!dragOverState.date || dragOverState.hour === null || dragOverState.minute === null) {
+                            return false;
+                          }
+                          const dragDate = dragOverState.date;
+                          const isSameDate = dragDate.getFullYear() === day.getFullYear() &&
+                                             dragDate.getMonth() === day.getMonth() &&
+                                             dragDate.getDate() === day.getDate();
+                          return isSameDate && dragOverState.hour === hour && dragOverState.minute === minute;
+                        })()
                           ? 'bg-blue-200 border-blue-400 border-2'
                           : ''
                       }`}
