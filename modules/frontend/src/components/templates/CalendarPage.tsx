@@ -13,6 +13,8 @@ import { useAgendas } from '../../hooks/useAgendas';
 import type { CalendarEvent, CalendarMode } from '../../types/calendar';
 import type { AvailabilityHoursCreate } from '../../types/availability';
 import type { BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../../types/businessHours';
+import type { AgendaGenerateRequest } from '../../types/agenda';
+import { getWeek, getYear, eachWeekOfInterval, startOfWeek, endOfWeek } from 'date-fns';
 import { ApiGateway } from '../../gateways/apiGateway';
 import { LocalGateway } from '../../gateways/localGateway';
 
@@ -29,6 +31,7 @@ export function CalendarPage() {
   const [clickedTime, setClickedTime] = useState<{ start: string; end: string } | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<CalendarMode>('planning');
+  const [generatingAgenda, setGeneratingAgenda] = useState(false);
 
   const calendar = useCalendar();
   const hours = useHours(gateway, calendar.dateRange.start, calendar.dateRange.end);
@@ -188,6 +191,49 @@ export function CalendarPage() {
     }
   };
 
+  const handleGenerateAgenda = async () => {
+    if (!hours.selectedRoleId) {
+      setError('Please select a role first');
+      return;
+    }
+
+    try {
+      setGeneratingAgenda(true);
+      setError(null);
+
+      const year = getYear(calendar.currentDate);
+      let weeks: number[];
+
+      if (calendar.view === 'week') {
+        const weekNumber = getWeek(calendar.currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
+        weeks = [weekNumber];
+      } else {
+        const monthStart = calendar.dateRange.start;
+        const monthEnd = calendar.dateRange.end;
+        const weeksInMonth = eachWeekOfInterval(
+          { start: monthStart, end: monthEnd },
+          { weekStartsOn: 1 }
+        );
+        weeks = weeksInMonth.map((weekDate) => getWeek(weekDate, { weekStartsOn: 1, firstWeekContainsDate: 4 }));
+      }
+
+      const request: AgendaGenerateRequest = {
+        role_id: hours.selectedRoleId,
+        weeks,
+        year,
+        optimization_strategy: 'balance_workload',
+      };
+
+      await gateway.generateAgenda(request);
+      agendas.refresh();
+      setMode('schedule');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate agenda');
+    } finally {
+      setGeneratingAgenda(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -257,6 +303,13 @@ export function CalendarPage() {
                   Schedule
                 </button>
               </div>
+              <Button
+                variant="primary"
+                onClick={handleGenerateAgenda}
+                disabled={generatingAgenda || !hours.selectedRoleId}
+              >
+                {generatingAgenda ? 'Generating...' : 'Generate Agenda'}
+              </Button>
               {mode === 'schedule' && agendas.agendas.length > 0 && (
                 <Select
                   value={agendas.selectedAgendaId || ''}

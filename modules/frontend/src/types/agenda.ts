@@ -31,3 +31,10 @@ export interface Agenda {
 
 export type CalendarMode = 'planning' | 'schedule';
 
+export interface AgendaGenerateRequest {
+  role_id: string;
+  weeks: number[];
+  year: number;
+  optimization_strategy: 'maximize_coverage' | 'minimize_gaps' | 'balance_workload';
+}
+

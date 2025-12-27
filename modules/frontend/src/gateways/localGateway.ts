@@ -2,7 +2,7 @@ import type { IGateway } from './interfaces';
 import type { AvailabilityHours, AvailabilityHoursCreate } from '../types/availability';
 import type { BusinessServiceHours, BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate } from '../types/businessHours';
 import type { Person, Role, HoursFilters } from '../types/calendar';
-import type { Agenda } from '../types/agenda';
+import type { Agenda, AgendaGenerateRequest } from '../types/agenda';
 
 const mockPeople: Person[] = [
   { id: '1', name: 'John Doe', email: 'john@example.com' },
@@ -164,6 +164,10 @@ export class LocalGateway implements IGateway {
 
   async getAgenda(agendaId: string): Promise<Agenda> {
     throw new Error('Agenda not found in local gateway');
+  }
+
+  async generateAgenda(request: AgendaGenerateRequest): Promise<Agenda> {
+    throw new Error('Agenda generation not supported in local gateway');
   }
 }
 
