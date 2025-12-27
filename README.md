@@ -68,8 +68,14 @@ The project uses `pyproject.toml` for dependency management. All required packag
 
 Start the development server:
 
+Using uvicorn directly:
 ```bash
-uvicorn app.main:app --reload
+uvicorn modules.main_backend.main:app --reload
+```
+
+Using uv (recommended):
+```bash
+uv run uvicorn modules.main_backend.main:app --reload
 ```
 
 The API will be available at:
