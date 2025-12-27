@@ -367,13 +367,17 @@ export function CalendarWeekView({
                           : ''
                       }`}
                     >
-                      {hasBusinessHours && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <span className="text-xs text-green-700 font-medium opacity-40 select-none">
-                            Business Hours
-                          </span>
-                        </div>
-                      )}
+                      {hasBusinessHours && (() => {
+                        const businessHoursEvents = getBusinessHoursForSlot(day, slotIndex);
+                        const roleName = businessHoursEvents[0]?.role_name || 'Business Hours';
+                        return (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-xs text-green-700 font-medium opacity-40 select-none">
+                              {roleName} - Business Hours
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}
