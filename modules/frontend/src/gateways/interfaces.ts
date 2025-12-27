@@ -7,6 +7,7 @@ export interface IGateway {
   getRoles(): Promise<Role[]>;
   getAvailabilityHours(filters: HoursFilters): Promise<AvailabilityHours[]>;
   createAvailabilityHours(personId: string, data: AvailabilityHoursCreate): Promise<AvailabilityHours>;
+  updateAvailabilityHours?(id: string, data: AvailabilityHours): Promise<AvailabilityHours>;
   getBusinessServiceHours(filters: HoursFilters): Promise<BusinessServiceHours[]>;
   createBusinessServiceHours(data: BusinessServiceHoursCreate): Promise<BusinessServiceHours>;
 }

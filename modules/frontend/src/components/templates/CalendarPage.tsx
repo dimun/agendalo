@@ -20,6 +20,7 @@ export function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [clickedDate, setClickedDate] = useState<Date | undefined>();
   const [clickedTime, setClickedTime] = useState<{ start: string; end: string } | undefined>();
+  const [error, setError] = useState<string | null>(null);
 
   const calendar = useCalendar();
   const hours = useHours(gateway, calendar.dateRange.start, calendar.dateRange.end);
@@ -44,6 +45,7 @@ export function CalendarPage() {
 
   const handleEventClick = (event: CalendarEvent) => {
     setSelectedEvent(event);
+    setModalType(event.type);
     setModalOpen(true);
   };
 
@@ -57,15 +59,21 @@ export function CalendarPage() {
     setModalOpen(true);
   };
 
-  const handleSubmit = async (data: AvailabilityHoursCreate | BusinessServiceHoursCreate, personId?: string) => {
-    if (modalType === 'availability') {
-      const selectedPersonId = personId || hours.selectedPersonId;
-      if (!selectedPersonId) {
-        throw new Error('Please select a person');
-      }
-      await hours.createAvailabilityHours(selectedPersonId, data as AvailabilityHoursCreate);
+  const handleSubmit = async (data: AvailabilityHoursCreate | BusinessServiceHoursCreate, personId?: string, eventId?: string) => {
+    if (eventId) {
+      // Update existing event
+      await hours.updateAvailabilityHours(eventId, data as AvailabilityHoursCreate, personId);
     } else {
-      await hours.createBusinessServiceHours(data as BusinessServiceHoursCreate);
+      // Create new event
+      if (modalType === 'availability') {
+        const selectedPersonId = personId || hours.selectedPersonId;
+        if (!selectedPersonId) {
+          throw new Error('Please select a person');
+        }
+        await hours.createAvailabilityHours(selectedPersonId, data as AvailabilityHoursCreate);
+      } else {
+        await hours.createBusinessServiceHours(data as BusinessServiceHoursCreate);
+      }
     }
     hours.refresh();
   };
@@ -78,7 +86,10 @@ export function CalendarPage() {
 
   const handleEventDrop = async (eventId: string, date: Date, hour: number, minute: number) => {
     const event = hours.calendarEvents.find((e) => e.id === eventId);
-    if (!event) return;
+    if (!event) {
+      console.error('Event not found:', eventId);
+      return;
+    }
 
     const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
     const [originalStartHour, originalStartMinute] = event.start_time.split(':').map(Number);
@@ -90,14 +101,32 @@ export function CalendarPage() {
     const newEndMinute = newEndMinutes % 60;
     const endTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMinute).padStart(2, '0')}:00`;
 
-    if (event.type === 'availability') {
-      // For now, we'll need to update the availability hours
-      // This would require an update endpoint or recreating with new times
-      console.log('Drop availability event:', { eventId, date, startTime, endTime });
-      // TODO: Implement update availability hours
-    } else {
-      console.log('Drop business hours event:', { eventId, date, startTime, endTime });
-      // TODO: Implement update business service hours
+    try {
+      if (event.type === 'availability') {
+        // Extract original hours ID from event ID
+        const originalHoursId = eventId.includes('-') && eventId.split('-').length > 1 
+          ? eventId.split('-').slice(0, -1).join('-')
+          : eventId;
+        
+        // Create update data
+        const updateData: AvailabilityHoursCreate = {
+          role_id: event.role_id,
+          start_time: startTime,
+          end_time: endTime,
+          is_recurring: event.is_recurring,
+          day_of_week: event.day_of_week ?? null,
+          specific_date: event.specific_date ? date.toISOString().split('T')[0] : null,
+          start_date: event.start_date ? event.start_date.toISOString().split('T')[0] : null,
+          end_date: event.end_date ? event.end_date.toISOString().split('T')[0] : null,
+        };
+        
+        await hours.updateAvailabilityHours(originalHoursId, updateData, event.person_id);
+      } else {
+        console.log('Business hours drag and drop not yet implemented');
+      }
+    } catch (err) {
+      console.error('Failed to update event:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update event');
     }
   };
 
@@ -109,10 +138,10 @@ export function CalendarPage() {
     );
   }
 
-  if (hours.error) {
+  if (hours.error || error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-lg text-red-600">Error: {hours.error}</div>
+        <div className="text-lg text-red-600">Error: {hours.error || error}</div>
       </div>
     );
   }
@@ -194,6 +223,7 @@ export function CalendarPage() {
         roles={hours.roles}
         initialDate={clickedDate}
         initialTime={clickedTime}
+        initialEvent={selectedEvent}
       />
     </div>
   );

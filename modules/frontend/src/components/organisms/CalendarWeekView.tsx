@@ -208,6 +208,7 @@ export function CalendarWeekView({
                       onDragOver={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'move';
                       }}
                       onDrop={(e) => {
                         e.preventDefault();

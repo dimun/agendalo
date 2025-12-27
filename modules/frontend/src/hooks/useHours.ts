@@ -125,6 +125,45 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
     [gateway, loadBusinessServiceHours]
   );
 
+  const updateAvailabilityHours = useCallback(
+    async (eventId: string, data: AvailabilityHoursCreate, personId?: string) => {
+      try {
+        // Extract original hours ID from event ID (might be composite like "hours.id-2025-01-01")
+        const originalHoursId = eventId.split('-').slice(0, -1).join('-') || eventId;
+        
+        // Find the original availability hours
+        const originalHours = availabilityHours.find(ah => ah.id === originalHoursId);
+        if (!originalHours) {
+          throw new Error('Original availability hours not found');
+        }
+
+        // For now, delete and recreate (until we have update endpoint)
+        // In a real implementation, we'd call an update endpoint
+        const updatedHours: AvailabilityHours = {
+          ...originalHours,
+          ...data,
+          person_id: personId || originalHours.person_id,
+        };
+        
+        // Update in local state (for local gateway)
+        if ('updateAvailabilityHours' in gateway) {
+          await (gateway as any).updateAvailabilityHours(originalHoursId, updatedHours);
+        } else {
+          // Fallback: remove old and add new
+          setAvailabilityHours((prev) => prev.filter(ah => ah.id !== originalHoursId));
+          setAvailabilityHours((prev) => [...prev, updatedHours]);
+        }
+        
+        await loadAvailabilityHours();
+        return updatedHours;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update availability hours');
+        throw err;
+      }
+    },
+    [gateway, availabilityHours, loadAvailabilityHours]
+  );
+
   return {
     people,
     roles,
@@ -137,6 +176,7 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
     setSelectedPersonId,
     createAvailabilityHours,
     createBusinessServiceHours,
+    updateAvailabilityHours,
     refresh: () => {
       loadAvailabilityHours();
       loadBusinessServiceHours();

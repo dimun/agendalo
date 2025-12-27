@@ -104,5 +104,17 @@ export class LocalGateway implements IGateway {
     mockBusinessServiceHours.push(newHours);
     return Promise.resolve(newHours);
   }
+
+  async updateAvailabilityHours(
+    id: string,
+    data: AvailabilityHours
+  ): Promise<AvailabilityHours> {
+    const index = mockAvailabilityHours.findIndex((ah) => ah.id === id);
+    if (index === -1) {
+      throw new Error('Availability hours not found');
+    }
+    mockAvailabilityHours[index] = data;
+    return Promise.resolve(data);
+  }
 }
 

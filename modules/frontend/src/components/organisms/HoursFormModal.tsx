@@ -11,12 +11,13 @@ import { DatePicker } from '../molecules/DatePicker';
 interface HoursFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: AvailabilityHoursCreate | BusinessServiceHoursCreate, personId?: string) => Promise<void>;
+  onSubmit: (data: AvailabilityHoursCreate | BusinessServiceHoursCreate, personId?: string, eventId?: string) => Promise<void>;
   type: 'availability' | 'business';
   people: Person[];
   roles: Role[];
   initialDate?: Date;
   initialTime?: { start: string; end: string };
+  initialEvent?: { id: string; type: 'availability' | 'business'; person_id?: string; role_id: string; start_time: string; end_time: string; is_recurring: boolean; day_of_week?: number | null; specific_date?: Date | null; start_date?: Date | null; end_date?: Date | null } | null;
 }
 
 export function HoursFormModal({
@@ -28,27 +29,60 @@ export function HoursFormModal({
   roles,
   initialDate,
   initialTime,
+  initialEvent,
 }: HoursFormModalProps) {
   const [roleId, setRoleId] = useState('');
   const [personId, setPersonId] = useState('');
-  const [startTime, setStartTime] = useState(initialTime?.start || '09:00');
-  const [endTime, setEndTime] = useState(initialTime?.end || '17:00');
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('17:00');
   const [isRecurring, setIsRecurring] = useState(true);
   const [dayOfWeek, setDayOfWeek] = useState<number | null>(null);
-  const [specificDate, setSpecificDate] = useState(
-    initialDate ? initialDate.toISOString().split('T')[0] : ''
-  );
+  const [specificDate, setSpecificDate] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [eventId, setEventId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (initialDate) {
+    if (initialEvent) {
+      // Editing existing event
+      setEventId(initialEvent.id);
+      setRoleId(initialEvent.role_id);
+      if (initialEvent.person_id) {
+        setPersonId(initialEvent.person_id);
+      }
+      setStartTime(initialEvent.start_time.substring(0, 5));
+      setEndTime(initialEvent.end_time.substring(0, 5));
+      setIsRecurring(initialEvent.is_recurring);
+      setDayOfWeek(initialEvent.day_of_week ?? null);
+      if (initialEvent.specific_date) {
+        setSpecificDate(initialEvent.specific_date.toISOString().split('T')[0]);
+      } else {
+        setSpecificDate('');
+      }
+      if (initialEvent.start_date) {
+        setStartDate(initialEvent.start_date.toISOString().split('T')[0]);
+      } else {
+        setStartDate('');
+      }
+      if (initialEvent.end_date) {
+        setEndDate(initialEvent.end_date.toISOString().split('T')[0]);
+      } else {
+        setEndDate('');
+      }
+    } else if (initialDate) {
+      // Creating new event from date click
       setSpecificDate(initialDate.toISOString().split('T')[0]);
       setIsRecurring(false);
+      setStartTime(initialTime?.start || '09:00');
+      setEndTime(initialTime?.end || '17:00');
+    } else {
+      // Creating new event from button
+      setStartTime(initialTime?.start || '09:00');
+      setEndTime(initialTime?.end || '17:00');
     }
-  }, [initialDate]);
+  }, [initialEvent, initialDate, initialTime]);
 
   if (!isOpen) return null;
 
@@ -74,7 +108,7 @@ export function HoursFormModal({
           start_date: isRecurring && startDate ? startDate : null,
           end_date: isRecurring && endDate ? endDate : null,
         };
-        await onSubmit(data, personId);
+        await onSubmit(data, personId, eventId);
       } else {
         const data: BusinessServiceHoursCreate = {
           role_id: roleId,
@@ -86,7 +120,7 @@ export function HoursFormModal({
           start_date: isRecurring && startDate ? startDate : null,
           end_date: isRecurring && endDate ? endDate : null,
         };
-        await onSubmit(data);
+        await onSubmit(data, undefined, eventId);
       }
       onClose();
     } catch (err) {
@@ -100,7 +134,7 @@ export function HoursFormModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
         <h2 className="text-xl font-semibold mb-4">
-          Add {type === 'availability' ? 'Availability' : 'Business Service'} Hours
+          {initialEvent ? 'Edit' : 'Add'} {type === 'availability' ? 'Availability' : 'Business Service'} Hours
         </h2>
 
         <form onSubmit={handleSubmit}>
