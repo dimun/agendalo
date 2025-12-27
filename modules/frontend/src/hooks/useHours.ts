@@ -128,13 +128,23 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
   const updateAvailabilityHours = useCallback(
     async (eventId: string, data: AvailabilityHoursCreate, personId?: string) => {
       try {
-        // Extract original hours ID from event ID (might be composite like "hours.id-2025-01-01")
-        const originalHoursId = eventId.split('-').slice(0, -1).join('-') || eventId;
+        // Extract original hours ID from event ID
+        // Event IDs can be:
+        // - Simple: "ah-1234567890" (for specific_date events)
+        // - Composite: "ah-1234567890-2025-01-15" (for recurring/date range events)
+        // We need to check if it ends with a date pattern (YYYY-MM-DD) and remove it
+        const datePattern = /-\d{4}-\d{2}-\d{2}$/;
+        const originalHoursId = datePattern.test(eventId) 
+          ? eventId.replace(datePattern, '')
+          : eventId;
         
         // Find the original availability hours
         const originalHours = availabilityHours.find(ah => ah.id === originalHoursId);
         if (!originalHours) {
-          throw new Error('Original availability hours not found');
+          console.error('Available hours IDs:', availabilityHours.map(ah => ah.id));
+          console.error('Looking for:', originalHoursId);
+          console.error('Event ID was:', eventId);
+          throw new Error(`Original availability hours not found for ID: ${originalHoursId}`);
         }
 
         // For now, delete and recreate (until we have update endpoint)

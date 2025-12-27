@@ -104,9 +104,14 @@ export function CalendarPage() {
       const endTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMinute).padStart(2, '0')}:00`;
 
       if (event.type === 'availability') {
-        // Extract original hours ID from event ID (for recurring events, ID is like "hours.id-2025-01-01")
-        const originalHoursId = eventId.includes('-') && eventId.split('-').length > 1 
-          ? eventId.split('-').slice(0, -1).join('-')
+        // Extract original hours ID from event ID
+        // Event IDs can be:
+        // - Simple: "ah-1234567890" (for specific_date events)
+        // - Composite: "ah-1234567890-2025-01-15" (for recurring/date range events)
+        // We need to check if it ends with a date pattern (YYYY-MM-DD) and remove it
+        const datePattern = /-\d{4}-\d{2}-\d{2}$/;
+        const originalHoursId = datePattern.test(eventId) 
+          ? eventId.replace(datePattern, '')
           : eventId;
         
         // For recurring events moved to a specific date, convert to specific_date
