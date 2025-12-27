@@ -7,6 +7,7 @@ from modules.main_backend.api.dependencies import get_business_service_hours_ser
 from modules.main_backend.domain.schemas import (
     BusinessServiceHoursCreate,
     BusinessServiceHoursResponse,
+    BusinessServiceHoursBulkCreate,
 )
 from modules.main_backend.services.business_service_hours_service import BusinessServiceHoursService
 
@@ -43,6 +44,41 @@ def create_business_service_hours(
         is_recurring=business_service_hours.is_recurring,
         specific_date=business_service_hours.specific_date,
     )
+
+
+@router.post(
+    "/bulk",
+    response_model=list[BusinessServiceHoursResponse],
+    status_code=status.HTTP_201_CREATED,
+)
+def create_business_service_hours_bulk(
+    bulk_data: BusinessServiceHoursBulkCreate,
+    business_service_hours_service: BusinessServiceHoursService = Depends(
+        get_business_service_hours_service
+    ),
+):
+    business_service_hours_list = (
+        business_service_hours_service.create_business_service_hours_bulk(bulk_data)
+    )
+    if not business_service_hours_list:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Role not found or invalid days format",
+        )
+    return [
+        BusinessServiceHoursResponse(
+            id=bsh.id,
+            role_id=bsh.role_id,
+            day_of_week=bsh.day_of_week,
+            start_time=bsh.start_time,
+            end_time=bsh.end_time,
+            start_date=bsh.start_date,
+            end_date=bsh.end_date,
+            is_recurring=bsh.is_recurring,
+            specific_date=bsh.specific_date,
+        )
+        for bsh in business_service_hours_list
+    ]
 
 
 @router.get("", response_model=list[BusinessServiceHoursResponse])

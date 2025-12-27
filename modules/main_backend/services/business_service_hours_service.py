@@ -2,7 +2,7 @@ from datetime import date
 from uuid import UUID, uuid4
 
 from modules.main_backend.domain.models import BusinessServiceHours
-from modules.main_backend.domain.schemas import BusinessServiceHoursCreate
+from modules.main_backend.domain.schemas import BusinessServiceHoursCreate, BusinessServiceHoursBulkCreate
 from modules.main_backend.repositories.interfaces import (
     BusinessServiceHoursRepository,
     RoleRepository,
@@ -86,4 +86,65 @@ class BusinessServiceHoursService:
         self, business_service_hours_id: UUID
     ) -> bool:
         return self.business_service_hours_repository.delete(business_service_hours_id)
+
+    def create_business_service_hours_bulk(
+        self, bulk_data: BusinessServiceHoursBulkCreate
+    ) -> list[BusinessServiceHours]:
+        role = self.role_repository.get_by_id(bulk_data.role_id)
+        if not role:
+            return []
+
+        days_to_create = self._parse_days(bulk_data.days)
+        if not days_to_create:
+            return []
+
+        created_hours = []
+        for day_of_week in days_to_create:
+            business_service_hours = BusinessServiceHours(
+                id=uuid4(),
+                role_id=bulk_data.role_id,
+                day_of_week=day_of_week,
+                start_time=bulk_data.start_time,
+                end_time=bulk_data.end_time,
+                start_date=bulk_data.start_date,
+                end_date=bulk_data.end_date,
+                is_recurring=True,
+                specific_date=None,
+            )
+            created = self.business_service_hours_repository.create(business_service_hours)
+            created_hours.append(created)
+
+        return created_hours
+
+    def _parse_days(self, days: str) -> list[int]:
+        days_lower = days.lower().strip()
+        
+        if days_lower == "all":
+            return list(range(7))
+        
+        day_map = {
+            "mon": 0, "tue": 1, "wed": 2, "thu": 3,
+            "fri": 4, "sat": 5, "sun": 6
+        }
+        
+        if "-" in days_lower:
+            parts = days_lower.split("-")
+            if len(parts) != 2:
+                return []
+            
+            start_day = parts[0].strip()
+            end_day = parts[1].strip()
+            
+            if start_day not in day_map or end_day not in day_map:
+                return []
+            
+            start_idx = day_map[start_day]
+            end_idx = day_map[end_day]
+            
+            if start_idx <= end_idx:
+                return list(range(start_idx, end_idx + 1))
+            else:
+                return list(range(start_idx, 7)) + list(range(0, end_idx + 1))
+        
+        return []
 

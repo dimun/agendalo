@@ -103,6 +103,15 @@ class BusinessServiceHoursResponse(BaseModel):
     specific_date: date | None = None
 
 
+class BusinessServiceHoursBulkCreate(BaseModel):
+    role_id: UUID
+    start_time: time
+    end_time: time
+    start_date: date | None = None
+    end_date: date | None = None
+    days: str
+
+
 class AgendaGenerateRequest(BaseModel):
     role_id: UUID
     weeks: list[int]
