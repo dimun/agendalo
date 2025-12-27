@@ -258,9 +258,10 @@ export function CalendarWeekView({
                   />
                 );
               })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
