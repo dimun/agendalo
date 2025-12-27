@@ -204,8 +204,17 @@ export function CalendarWeekView({
 
   const getPreviewEvent = (date: Date) => {
     if (!dragOverState.event || !dragOverState.date || 
-        !isSameDay(dragOverState.date, date) || 
         dragOverState.hour === null || dragOverState.minute === null) {
+      return null;
+    }
+    
+    // Compare dates more carefully - check if they're the same day
+    const dragDate = dragOverState.date;
+    const isSameDate = dragDate.getFullYear() === date.getFullYear() &&
+                       dragDate.getMonth() === date.getMonth() &&
+                       dragDate.getDate() === date.getDate();
+    
+    if (!isSameDate) {
       return null;
     }
 
