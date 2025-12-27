@@ -276,6 +276,28 @@ export function CalendarPage() {
         initialTime={clickedTime}
         initialEvent={selectedEvent}
       />
+
+      {eventToDelete && (
+        <ConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setEventToDelete(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          title="Delete Business Hours"
+          message={
+            `Are you sure you want to delete business hours for ${eventToDelete.role_name || 'this role'}?\n\n` +
+            `Day: ${eventToDelete.day_of_week !== null 
+              ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][eventToDelete.day_of_week]
+              : 'Specific Date'}\n` +
+            `Time: ${eventToDelete.start_time} - ${eventToDelete.end_time}`
+          }
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+        />
+      )}
     </div>
   );
 }
