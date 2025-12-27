@@ -205,6 +205,11 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
     [gateway, availabilityHours, loadAvailabilityHours]
   );
 
+  const refresh = useCallback(() => {
+    loadAvailabilityHours();
+    loadBusinessServiceHours();
+  }, [loadAvailabilityHours, loadBusinessServiceHours]);
+
   return {
     people,
     roles,
@@ -220,10 +225,7 @@ export function useHours(gateway: IGateway, startDate: Date, endDate: Date) {
     createBusinessServiceHoursBulk,
     deleteBusinessServiceHours,
     updateAvailabilityHours,
-    refresh: () => {
-      loadAvailabilityHours();
-      loadBusinessServiceHours();
-    },
+    refresh,
   };
 }
 
