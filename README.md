@@ -66,22 +66,26 @@ The project uses `pyproject.toml` for dependency management. All required packag
 
 ### Running the Application
 
+**Important**: The backend must be run from the project root directory (`/home/diego/agendalo`), not from inside `modules/main_backend`.
+
 Start the development server:
 
 Using uvicorn directly:
 ```bash
+cd /home/diego/agendalo
 uvicorn modules.main_backend.main:app --reload
 ```
 
 Using uv (recommended):
 ```bash
+cd /home/diego/agendalo
 uv run uvicorn modules.main_backend.main:app --reload
 ```
 
 The API will be available at:
-- **API**: http://localhost:8000
-- **Interactive API Documentation**: http://localhost:8000/docs
-- **Alternative API Documentation**: http://localhost:8000/redoc
+- **API**: http://localhost:8000 (or http://localhost:8001 if port 8000 is in use)
+- **Interactive API Documentation**: http://localhost:8000/docs (or http://localhost:8001/docs)
+- **Alternative API Documentation**: http://localhost:8000/redoc (or http://localhost:8001/redoc)
 
 ### Database
 
