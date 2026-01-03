@@ -788,6 +788,131 @@ class TestORToolsScheduler:
             )
         assert len(person_assignments) >= 2
 
+    def test_optimize_balance_workload_distributes_evenly_same_availability(
+        self, scheduler, person1_id, person2_id, role_id
+    ):
+        availability_hours = [
+            AvailabilityHours(
+                id=uuid4(),
+                person_id=person1_id,
+                role_id=role_id,
+                day_of_week=0,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            ),
+            AvailabilityHours(
+                id=uuid4(),
+                person_id=person2_id,
+                role_id=role_id,
+                day_of_week=0,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            ),
+        ]
+        business_service_hours = [
+            BusinessServiceHours(
+                id=uuid4(),
+                role_id=role_id,
+                day_of_week=0,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            )
+        ]
+
+        result = scheduler.optimize(
+            availability_hours, business_service_hours, [1], 2024, "balance_workload"
+        )
+
+        assert len(result) == 1
+        person1_assignments = [
+            a for a in result if a.person_id == person1_id
+        ]
+        person2_assignments = [
+            a for a in result if a.person_id == person2_id
+        ]
+        assert len(person1_assignments) + len(person2_assignments) == 1
+        assert len(person1_assignments) == 1 or len(person2_assignments) == 1
+
+    def test_optimize_balance_workload_distributes_evenly_multiple_slots(
+        self, scheduler, person1_id, person2_id, role_id
+    ):
+        availability_hours = [
+            AvailabilityHours(
+                id=uuid4(),
+                person_id=person1_id,
+                role_id=role_id,
+                day_of_week=0,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            ),
+            AvailabilityHours(
+                id=uuid4(),
+                person_id=person1_id,
+                role_id=role_id,
+                day_of_week=1,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            ),
+            AvailabilityHours(
+                id=uuid4(),
+                person_id=person2_id,
+                role_id=role_id,
+                day_of_week=0,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            ),
+            AvailabilityHours(
+                id=uuid4(),
+                person_id=person2_id,
+                role_id=role_id,
+                day_of_week=1,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            ),
+        ]
+        business_service_hours = [
+            BusinessServiceHours(
+                id=uuid4(),
+                role_id=role_id,
+                day_of_week=0,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            ),
+            BusinessServiceHours(
+                id=uuid4(),
+                role_id=role_id,
+                day_of_week=1,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+                is_recurring=True,
+            ),
+        ]
+
+        result = scheduler.optimize(
+            availability_hours, business_service_hours, [1], 2024, "balance_workload"
+        )
+
+        assert len(result) == 2
+        person1_assignments = [
+            a for a in result if a.person_id == person1_id
+        ]
+        person2_assignments = [
+            a for a in result if a.person_id == person2_id
+        ]
+        assert len(person1_assignments) == 1
+        assert len(person2_assignments) == 1
+        
+        time_slots = {(a.date, a.start_time, a.end_time) for a in result}
+        assert len(time_slots) == 2
+
     @staticmethod
     def _times_overlap(
         start1: time, end1: time, start2: time, end2: time

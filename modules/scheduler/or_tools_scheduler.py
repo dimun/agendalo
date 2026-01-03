@@ -94,7 +94,7 @@ class ORToolsScheduler(Scheduler):
                 slot_date, slot_start, slot_end, person_ids, assignments
             )
             if person_assignments:
-                model.Add(sum(person_assignments) >= 1)
+                model.Add(sum(person_assignments) == 1)
 
     def _get_person_assignments_for_slot(
         self,
